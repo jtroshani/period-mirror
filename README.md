@@ -220,6 +220,19 @@ point; insufficient history is labelled, not hidden.
 
 There is **no risk score and no diagnosis anywhere in the engine.**
 
+### Age as a prediction prior
+
+Age can be entered on the Profile screen (stored as birth year). Cycles tend
+to be longer and more variable in the first years after menarche and around
+perimenopause, and most regular roughly mid-20s to late-30s. `engine/cycles.ts`
+→ `cyclePredictionModel()` uses age **only as a starting assumption** for the
+calendar's predictions — the assumed cycle length and the ± "likely start
+window" it draws — and it is fully superseded by the person's own data once
+there are 3+ completed cycles. It is never a comparison or a judgement. The
+Calendar shows a wider shaded start window (and a short explanatory note) when
+age widens the estimate and personal history is still thin; the doctor report
+includes age in its header.
+
 ---
 
 ## Medical-safety approach

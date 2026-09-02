@@ -22,6 +22,7 @@ import { mean, median, round, stdDev } from "@/utils/statistics";
 import { uid } from "@/utils/id";
 import { translate } from "@/i18n/core";
 import { fmtLongDate } from "@/i18n/format";
+import { ageFromBirthYear } from "@/utils/age";
 import { changesToDiscuss as buildChanges } from "@/i18n/copy";
 import {
   completedCycles,
@@ -181,6 +182,7 @@ export function generateReport(
     subjectLabel: user?.isDemo
       ? translate(lang, "report.subjectDemo")
       : user?.displayName || translate(lang, "report.subjectNone"),
+    subjectAge: ageFromBirthYear(user?.birthYear),
     cycleSummary: {
       recordedCycles: doneInRange.length,
       averageLengthDays: lengths.length ? round(mean(lengths), 1) : null,

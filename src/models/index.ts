@@ -461,6 +461,7 @@ export interface HealthReport {
   generatedAt: IsoTimestamp;
   range: { from: IsoDate; to: IsoDate; label: string };
   subjectLabel: string;
+  subjectAge: number | null;
   cycleSummary: {
     recordedCycles: number;
     averageLengthDays: number | null;

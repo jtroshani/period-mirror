@@ -17,12 +17,14 @@ import {
   IconInfo,
   IconChevronRight,
   IconLeaf,
+  IconCalendar,
 } from "@/components/ui/icons";
 import { brand } from "@/branding/brand";
 import { useAppStore } from "@/store/useAppStore";
 import { useUser } from "@/store/selectors";
 import { useT } from "@/i18n";
 import { downloadText } from "@/utils/download";
+import { ageFromBirthYear, birthYearFromAge } from "@/utils/age";
 
 export function ProfileScreen() {
   const navigate = useNavigate();
@@ -32,12 +34,15 @@ export function ProfileScreen() {
   const tier = useAppStore((s) => s.subscriptionTier);
   const settings = useAppStore((s) => s.settings);
   const setSettings = useAppStore((s) => s.setSettings);
+  const updateUser = useAppStore((s) => s.updateUser);
   const exportData = useAppStore((s) => s.exportData);
   const deleteAllData = useAppStore((s) => s.deleteAllData);
   const resetDemo = useAppStore((s) => s.resetDemo);
   const startFresh = useAppStore((s) => s.startFresh);
 
-  const [sheet, setSheet] = useState<null | "notifications" | "help" | "disclaimer" | "delete">(null);
+  const [sheet, setSheet] = useState<null | "notifications" | "help" | "disclaimer" | "delete" | "age">(null);
+  const currentAge = ageFromBirthYear(user?.birthYear);
+  const [ageInput, setAgeInput] = useState("");
 
   const initials = (user?.displayName ?? "You")
     .split(" ")
@@ -77,6 +82,23 @@ export function ProfileScreen() {
           </Card>
 
           <Card>
+            <button
+              className="flex w-full items-center justify-between text-left"
+              onClick={() => {
+                setAgeInput(currentAge != null ? String(currentAge) : "");
+                setSheet("age");
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <IconCalendar size={18} className="text-muted" />
+                <span className="text-[15px] text-ink">{t("profile.age")}</span>
+              </div>
+              <span className="flex items-center gap-1 text-[14px] text-muted">
+                {currentAge != null ? t("profile.ageYears", { n: currentAge }) : t("profile.ageAdd")}
+                <IconChevronRight size={16} className="text-faint" />
+              </span>
+            </button>
+            <Divider className="my-3" />
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <IconInfo size={18} className="text-muted" />
@@ -195,6 +217,54 @@ export function ProfileScreen() {
           <Disclaimer />
         </Stack>
       </Screen>
+
+      <Sheet
+        open={sheet === "age"}
+        onClose={() => setSheet(null)}
+        title={t("profile.ageSheetTitle")}
+        footer={
+          <div className="flex gap-2">
+            {currentAge != null && (
+              <Button
+                variant="quiet"
+                onClick={() => {
+                  updateUser({ birthYear: undefined });
+                  setSheet(null);
+                }}
+              >
+                {t("profile.ageClear")}
+              </Button>
+            )}
+            <Button
+              block
+              disabled={!(Number(ageInput) >= 9 && Number(ageInput) <= 60)}
+              onClick={() => {
+                updateUser({ birthYear: birthYearFromAge(Number(ageInput)) });
+                setSheet(null);
+              }}
+            >
+              {t("common.save")}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-[13px] leading-relaxed text-muted">{t("profile.ageSheetBody")}</p>
+          <label className="block">
+            <span className="text-[13px] font-medium text-ink">{t("profile.ageInputLabel")}</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={9}
+              max={60}
+              autoFocus
+              value={ageInput}
+              onChange={(e) => setAgeInput(e.target.value)}
+              className="mt-2 min-h-[48px] w-full rounded-xl border border-line bg-surface px-3 text-[16px] text-ink"
+            />
+          </label>
+        </div>
+      </Sheet>
 
       <Sheet open={sheet === "notifications"} onClose={() => setSheet(null)} title={t("profile.notifications")}>
         <p className="text-sm text-muted">{t("profile.notifBody")}</p>

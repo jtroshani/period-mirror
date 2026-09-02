@@ -16,12 +16,64 @@ import type {
 } from "@/models";
 import { addDays, daysBetween, todayIso } from "@/utils/date";
 import { deterministicId } from "@/utils/id";
-import { clamp, mean } from "@/utils/statistics";
+import { clamp, mean, stdDev } from "@/utils/statistics";
+import { ageFromBirthYear } from "@/utils/age";
 
 export const DEFAULT_CYCLE_LENGTH = 28;
 export const DEFAULT_PERIOD_LENGTH = 5;
+export const DEFAULT_VARIABILITY_DAYS = 2;
 /** Completed cycles required before "Me vs. Me" comparisons are shown. */
 export const CYCLES_FOR_READY_BASELINE = 4;
+/** Completed cycles after which predictions rely on personal data alone. */
+export const CYCLES_FOR_PERSONAL_PREDICTION = 3;
+
+// ---------------------------------------------------------------------------
+// Age → cycle prior
+// ---------------------------------------------------------------------------
+//
+// Menstrual cycles tend to be longer and more variable in the first years
+// after menarche and in the years approaching menopause, and most regular
+// roughly between the mid-20s and late 30s. We use age ONLY as a starting
+// assumption for predictions until enough of the person's own history exists
+// — it is never a comparison or a judgement about their body.
+
+export type AgeBand =
+  | "adolescent"
+  | "young_adult"
+  | "adult"
+  | "late_reproductive"
+  | "perimenopausal";
+
+export interface AgeCycleProfile {
+  band: AgeBand;
+  typicalCycleLength: number;
+  variabilityDays: number;
+  /** True when this age range is commonly associated with a wider spread. */
+  widerWindow: boolean;
+}
+
+export function ageBand(age: number): AgeBand {
+  if (age <= 17) return "adolescent";
+  if (age <= 24) return "young_adult";
+  if (age <= 39) return "adult";
+  if (age <= 44) return "late_reproductive";
+  return "perimenopausal";
+}
+
+const AGE_TABLE: Record<AgeBand, { len: number; v: number }> = {
+  adolescent: { len: 30, v: 5 },
+  young_adult: { len: 29, v: 3 },
+  adult: { len: 28, v: 2 },
+  late_reproductive: { len: 28, v: 3 },
+  perimenopausal: { len: 30, v: 6 },
+};
+
+export function ageCycleProfile(age: number | null | undefined): AgeCycleProfile | null {
+  if (age == null || !Number.isFinite(age) || age < 9 || age > 60) return null;
+  const band = ageBand(age);
+  const { len, v } = AGE_TABLE[band];
+  return { band, typicalCycleLength: len, variabilityDays: v, widerWindow: v >= 4 };
+}
 
 const BLEEDING_DAY = new Set(["spotting", "light", "medium", "heavy"]);
 
@@ -94,7 +146,9 @@ export function completedCycles(cycles: Cycle[]): Cycle[] {
 export function averageCycleLength(cycles: Cycle[], user?: User | null, window = 6): number {
   const done = completedCycles(cycles).slice(-window);
   if (done.length === 0) {
-    return user?.typicalCycleLengthDays ?? DEFAULT_CYCLE_LENGTH;
+    if (user?.typicalCycleLengthDays) return user.typicalCycleLengthDays;
+    const age = ageFromBirthYear(user?.birthYear);
+    return ageCycleProfile(age)?.typicalCycleLength ?? DEFAULT_CYCLE_LENGTH;
   }
   return mean(done.map((c) => c.lengthDays!));
 }
@@ -146,7 +200,8 @@ export function getCyclePosition(
 
   const containing =
     [...cycles].reverse().find((c) => c.startDate <= date) ?? cycles[0];
-  const avgLen = averageCycleLength(cycles, user);
+  const model = cyclePredictionModel(entries, user);
+  const avgLen = model.lengthDays;
   const avgPeriod = averagePeriodLength(cycles, user);
 
   const cycleDay = clamp(cycleDayOf(containing, date), 1, 400);
@@ -157,7 +212,7 @@ export function getCyclePosition(
 
   const phase = phaseFor(cycleDay, containing.lengthDays ?? avgLen, avgPeriod, isPeriod);
   const predictedNextPeriodStart = containing.isOngoing
-    ? addDays(containing.startDate, Math.round(avgLen))
+    ? addDays(containing.startDate, avgLen)
     : containing.endDate
       ? addDays(containing.endDate, 1)
       : null;
@@ -184,6 +239,73 @@ export function getCyclePosition(
   };
 }
 
+export type PredictionSource = "personal" | "age" | "typical" | "default";
+
+export interface CyclePredictionModel {
+  /** Expected cycle length used for forward predictions. */
+  lengthDays: number;
+  /** ± days of expected spread around a predicted period start. */
+  variabilityDays: number;
+  source: PredictionSource;
+  /** How many completed cycles fed the estimate. */
+  cyclesUsed: number;
+  ageBand: AgeBand | null;
+  /** Age range commonly associated with a wider spread AND not yet personal. */
+  ageWidensWindow: boolean;
+}
+
+/**
+ * The estimate the calendar uses for predictions. Personal history wins once
+ * there are enough completed cycles; before that, age (if known) sets the
+ * assumed length + spread, then the user's onboarding typicals, then defaults.
+ */
+export function cyclePredictionModel(
+  entries: Record<IsoDate, DailyHealthEntry>,
+  user: User | null,
+): CyclePredictionModel {
+  const cycles = deriveCycles(entries);
+  const done = completedCycles(cycles);
+  const age = ageFromBirthYear(user?.birthYear);
+  const ageProf = ageCycleProfile(age);
+  const band = ageProf?.band ?? null;
+
+  if (done.length >= CYCLES_FOR_PERSONAL_PREDICTION) {
+    const lengths = done.slice(-6).map((c) => c.lengthDays!);
+    return {
+      lengthDays: Math.round(mean(lengths)),
+      variabilityDays: Math.max(1, Math.round(stdDev(lengths))),
+      source: "personal",
+      cyclesUsed: lengths.length,
+      ageBand: band,
+      ageWidensWindow: false,
+    };
+  }
+
+  if (ageProf) {
+    // 1–2 completed cycles: nudge the age prior toward what we've seen.
+    const seen = done.length
+      ? mean(done.map((c) => c.lengthDays!))
+      : user?.typicalCycleLengthDays ?? ageProf.typicalCycleLength;
+    return {
+      lengthDays: Math.round((seen + ageProf.typicalCycleLength) / 2),
+      variabilityDays: ageProf.variabilityDays,
+      source: done.length ? "personal" : "age",
+      cyclesUsed: done.length,
+      ageBand: band,
+      ageWidensWindow: ageProf.widerWindow && done.length === 0,
+    };
+  }
+
+  return {
+    lengthDays: Math.round(averageCycleLength(cycles, user)),
+    variabilityDays: user?.regularitySelfReport === "irregular" ? 4 : DEFAULT_VARIABILITY_DAYS,
+    source: user?.typicalCycleLengthDays ? "typical" : "default",
+    cyclesUsed: done.length,
+    ageBand: band,
+    ageWidensWindow: false,
+  };
+}
+
 /** Forward-looking predicted next cycle (never shown as certain). */
 export function predictNextCycle(
   entries: Record<IsoDate, DailyHealthEntry>,
@@ -192,8 +314,8 @@ export function predictNextCycle(
   const cycles = deriveCycles(entries);
   if (cycles.length === 0) return null;
   const last = cycles[cycles.length - 1];
-  const avgLen = Math.round(averageCycleLength(cycles, user));
-  const start = addDays(last.startDate, avgLen);
+  const model = cyclePredictionModel(entries, user);
+  const start = addDays(last.startDate, model.lengthDays);
   return {
     id: deterministicId("cycle-predicted", start),
     startDate: start,

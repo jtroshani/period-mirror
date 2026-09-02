@@ -88,10 +88,6 @@
     border: 2px solid rgb(var(--pm-surface));
     box-shadow: 0 1px 3px rgb(28 25 23 / 0.25);
   }
-
-  .pm-scrim {
-    @apply fixed inset-0 z-40 bg-ink/40 backdrop-blur-[2px] animate-scrim-in;
-  }
 }
 
 @layer utilities {

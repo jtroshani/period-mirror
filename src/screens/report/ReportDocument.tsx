@@ -32,6 +32,7 @@ export function ReportDocument({ report }: { report: HealthReport }) {
           </p>
           <p>
             {t("report.docSubject")}: {report.subjectLabel}
+            {report.subjectAge != null && ` · ${t("report.docAge")} ${report.subjectAge}`}
           </p>
         </div>
       </header>

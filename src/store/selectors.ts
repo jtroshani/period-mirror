@@ -10,6 +10,7 @@ import { todayIso } from "@/utils/date";
 import {
   averageCycleLength,
   averagePeriodLength,
+  cyclePredictionModel,
   deriveCycles,
   getCyclePosition,
   predictNextCycle,
@@ -46,6 +47,12 @@ export function useCyclePosition(date: IsoDate = todayIso()) {
     () => getCyclePosition(entries, user, date),
     [entries, user, date],
   );
+}
+
+export function useCyclePredictionModel() {
+  const entries = useEntries();
+  const user = useUser();
+  return useMemo(() => cyclePredictionModel(entries, user), [entries, user]);
 }
 
 export function useCycleAverages() {

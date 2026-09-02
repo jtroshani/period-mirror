@@ -40,11 +40,11 @@ export function Sheet({ open, onClose, title, subtitle, children, footer }: Shee
   return (
     <div className="fixed inset-0 z-50">
       <div
-        className="pm-scrim"
+        className="absolute inset-0 z-0 bg-ink/40 backdrop-blur-[2px] animate-scrim-in"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="absolute inset-x-0 bottom-0 flex justify-center">
+      <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center">
         <div
           ref={panelRef}
           tabIndex={-1}

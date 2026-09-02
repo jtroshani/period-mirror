@@ -111,6 +111,7 @@ interface AppActions {
   loadDemo: () => void;
   resetDemo: () => void;
   completeOnboarding: (data: OnboardingData) => void;
+  updateUser: (patch: Partial<Pick<User, "displayName" | "birthYear" | "typicalCycleLengthDays" | "typicalPeriodLengthDays" | "regularitySelfReport">>) => void;
   upsertEntry: (date: IsoDate, patch: EntryPatch) => void;
   applyExtractedItems: (date: IsoDate, items: ExtractedItem[]) => void;
   addCheckIn: (checkIn: FreeTextCheckIn) => void;
@@ -314,6 +315,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
       user,
       entries,
     });
+  },
+
+  updateUser: (patch) => {
+    const current = get().user;
+    if (!current) return;
+    set({ user: { ...current, ...patch } });
   },
 
   upsertEntry: (date, patch) => {

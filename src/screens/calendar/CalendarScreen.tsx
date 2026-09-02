@@ -2,10 +2,15 @@ import { useMemo, useState } from "react";
 import { AppBar } from "@/components/ui/AppBar";
 import { Screen } from "@/components/layout/Screen";
 import { Card, IconButton } from "@/components/ui/primitives";
-import { IconChevronLeft, IconChevronRight } from "@/components/ui/icons";
+import { IconChevronLeft, IconChevronRight, IconInfo } from "@/components/ui/icons";
 import { DayDetailSheet } from "./DayDetailSheet";
 import { useAppStore } from "@/store/useAppStore";
-import { useCycles, useCyclePosition, useEntries, useUser } from "@/store/selectors";
+import {
+  useCyclePosition,
+  useCyclePredictionModel,
+  useEntries,
+  useUser,
+} from "@/store/selectors";
 import { useFmt, useT } from "@/i18n";
 import { dowLetters } from "@/i18n/format";
 import {
@@ -17,12 +22,11 @@ import {
   toIso,
   weekdayOffset,
 } from "@/utils/date";
-import { averageCycleLength, isBleedingDay, predictNextCycle } from "@/engine/cycles";
+import { isBleedingDay, predictNextCycle } from "@/engine/cycles";
 import type { IsoDate } from "@/models";
 
 export function CalendarScreen() {
   const entries = useEntries();
-  const cycles = useCycles();
   const user = useUser();
   const t = useT();
   const fmt = useFmt();
@@ -33,33 +37,49 @@ export function CalendarScreen() {
   const [selected, setSelected] = useState<IsoDate | null>(null);
 
   const today = todayIso();
+  const model = useCyclePredictionModel();
 
   const predictedPeriodDays = useMemo(() => {
     const set = new Set<IsoDate>();
     const next = predictNextCycle(entries, user);
     if (!next) return set;
-    const avg = Math.round(averageCycleLength(cycles, user));
     const periodLen = next.periodLengthDays ?? 5;
     for (let cyc = 0; cyc < 3; cyc++) {
-      const start = addDays(next.startDate, cyc * avg);
+      const start = addDays(next.startDate, cyc * model.lengthDays);
       for (let d = 0; d < periodLen; d++) set.add(addDays(start, d));
     }
     return set;
-  }, [entries, user, cycles]);
+  }, [entries, user, model.lengthDays]);
+
+  // Wider "start could fall anywhere here" band, driven by expected spread
+  // (age-informed until enough personal cycles). Only meaningful once spread
+  // is > ±2 days, so a settled 30-year-old just sees the dashed markers.
+  const predictedWindowDays = useMemo(() => {
+    const set = new Set<IsoDate>();
+    if (model.variabilityDays <= 2) return set;
+    const next = predictNextCycle(entries, user);
+    if (!next) return set;
+    for (let cyc = 0; cyc < 3; cyc++) {
+      const start = addDays(next.startDate, cyc * model.lengthDays);
+      for (let d = -model.variabilityDays; d <= model.variabilityDays; d++) {
+        set.add(addDays(start, d));
+      }
+    }
+    return set;
+  }, [entries, user, model.lengthDays, model.variabilityDays]);
 
   const fertileDays = useMemo(() => {
     const set = new Set<IsoDate>();
     if (!showFertile) return set;
     const next = predictNextCycle(entries, user);
     if (!next) return set;
-    const avg = Math.round(averageCycleLength(cycles, user));
     for (let cyc = -1; cyc < 3; cyc++) {
-      const periodStart = addDays(next.startDate, cyc * avg);
+      const periodStart = addDays(next.startDate, cyc * model.lengthDays);
       const ov = addDays(periodStart, -14);
       for (let d = -3; d <= 1; d++) set.add(addDays(ov, d));
     }
     return set;
-  }, [entries, user, cycles, showFertile]);
+  }, [entries, user, model.lengthDays, showFertile]);
 
   const weeks = useMemo(() => buildGrid(cursor, weekStartsOn), [cursor, weekStartsOn]);
   const monthIndex = fromIso(cursor).getMonth();
@@ -94,6 +114,8 @@ export function CalendarScreen() {
               const entry = entries[date];
               const isPeriod = isBleedingDay(entry);
               const isPredicted = !isPeriod && date > today && predictedPeriodDays.has(date);
+              const inWindow =
+                !isPeriod && !isPredicted && date > today && predictedWindowDays.has(date);
               const isFertile = fertileDays.has(date);
               const hasPain = (entry?.pain?.level ?? 0) >= 4;
               const hasSymptoms = (entry?.symptoms.length ?? 0) > 0;
@@ -105,7 +127,9 @@ export function CalendarScreen() {
                   onClick={() => setSelected(date)}
                   className={`relative flex h-[42px] flex-col items-center justify-center rounded-lg text-[13px] ${
                     inMonth ? "text-ink" : "text-faint/40"
-                  } ${isToday ? "ring-1 ring-primary" : ""} pm-pressable`}
+                  } ${isToday ? "ring-1 ring-primary" : ""} ${
+                    inWindow ? "bg-primary/[0.06]" : ""
+                  } pm-pressable`}
                 >
                   <span
                     className={`flex h-[26px] w-[26px] items-center justify-center rounded-full ${
@@ -141,9 +165,19 @@ export function CalendarScreen() {
               <span className="text-muted">
                 {t("calendar.nextPeriod")}{" "}
                 <span className="font-semibold text-ink">{fmt.mediumDate(position.predictedNextPeriodStart)}</span>
+                {model.variabilityDays > 2 && (
+                  <span className="text-faint"> {t("calendar.plusMinusDays", { n: model.variabilityDays })}</span>
+                )}
               </span>
             )}
           </Card>
+        )}
+
+        {model.ageWidensWindow && (
+          <p className="mt-2 flex items-start gap-2 px-1 text-[11px] leading-snug text-faint">
+            <IconInfo size={13} className="mt-0.5 shrink-0" />
+            {t("calendar.ageNote")}
+          </p>
         )}
 
         <Card className="mt-2.5">
@@ -156,6 +190,12 @@ export function CalendarScreen() {
               <span className="h-3 w-3 shrink-0 rounded-full border border-dashed border-primary" />{" "}
               {t("calendar.legPredicted")}
             </li>
+            {predictedWindowDays.size > 0 && (
+              <li className="flex items-center gap-2">
+                <span className="h-3 w-3 shrink-0 rounded-md bg-primary/[0.12]" />{" "}
+                {t("calendar.windowLegend")}
+              </li>
+            )}
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-notice" /> {t("calendar.legPain")}
             </li>
