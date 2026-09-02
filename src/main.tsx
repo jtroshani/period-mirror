@@ -5,11 +5,14 @@ import App from "./App";
 import "./index.css";
 
 /**
- * When the app is opened straight from disk (double-clicking index.html →
- * `file://`), the History API can't be used, so fall back to hash routing.
- * Served over http(s) it uses clean paths as normal.
+ * Use hash routing when opened straight from disk (`file://`, no History API)
+ * or when built for a project sub-path host like GitHub Pages
+ * (`VITE_HASH_ROUTER=true`). Served from a domain root it uses clean paths.
  */
-const Router = window.location.protocol === "file:" ? HashRouter : BrowserRouter;
+const useHashRouter =
+  window.location.protocol === "file:" ||
+  import.meta.env.VITE_HASH_ROUTER === "true";
+const Router = useHashRouter ? HashRouter : BrowserRouter;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

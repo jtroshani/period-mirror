@@ -2,6 +2,7 @@
 /// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
+  readonly VITE_HASH_ROUTER?: string;
   readonly VITE_AI_EXTRACTION_ENDPOINT?: string;
   readonly VITE_AI_EXTRACTION_ENABLED?: string;
   readonly VITE_HEALTHKIT_ENABLED?: string;

@@ -9,6 +9,10 @@ rework.
 > highlights changes compared with *your own* history. It does not diagnose,
 > treat, or give medical advice.
 
+**▶ Live demo:** https://jtroshani.github.io/period-mirror/ &nbsp;·&nbsp;
+**Open offline:** download the repo and double-click [`docs/index.html`](docs/index.html)
+(one self-contained file — no server, no build).
+
 ---
 
 ## Product concept
@@ -132,18 +136,21 @@ npm run typecheck  # tsc --build, no emit
 Open in a mobile viewport (375–430px) or install as a PWA for the intended
 experience. On desktop the app is centred in a device-style frame.
 
-### Just open it — no server (`file://`)
+### Just open it — no server
+
+- **Live:** https://jtroshani.github.io/period-mirror/
+- **Offline:** open [`docs/index.html`](docs/index.html) directly (it's in the repo).
+
+`docs/` is produced by:
 
 ```bash
-npm run build:standalone      # → dist-standalone/index.html  (single self-contained file)
+npm run build:standalone   # → dist-standalone/index.html   (open from disk)
+npm run build:pages        # → docs/  (same, hash-routed for GitHub Pages + 404 fallback)
 ```
 
-Then **double-click `dist-standalone/index.html`**. Everything (JS + CSS) is
-inlined into that one file, and the app switches to hash-based routing when it
-detects the `file://` protocol, so it runs straight from disk in any modern
-browser — no dev server, no build step for the viewer. Keep the two small
-`*.svg` icons next to it (only used for the tab icon). This build has no service
-worker; use `npm run build` for the installable PWA.
+Everything (JS + CSS) is inlined into the one HTML file; it uses hash-based
+routing so it runs from `file://` or any sub-path host with no config. These
+builds have no service worker — use `npm run build` for the installable PWA.
 
 ### Environment variables
 

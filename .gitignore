@@ -1,8 +1,11 @@
 node_modules
 dist
+dist-standalone
 dist-ssr
 *.tsbuildinfo
 *.local
+
+# docs/ is intentionally committed — it is the GitHub Pages build.
 .env
 .env.*
 !.env.example

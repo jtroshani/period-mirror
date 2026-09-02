@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:standalone": "tsc -b && STANDALONE=1 vite build",
+    "build:pages": "tsc -b && STANDALONE=1 VITE_HASH_ROUTER=true vite build && node scripts/pages.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
