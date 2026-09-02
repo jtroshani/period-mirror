@@ -1,5 +1,6 @@
 import type { IsoDate, ReportTimelineEntry } from "@/models";
-import { daysBetween, formatMediumDate, fromIso } from "@/utils/date";
+import { daysBetween, fromIso } from "@/utils/date";
+import { useFmt, useT, LOCALES } from "@/i18n";
 
 interface TimelineProps {
   entries: ReportTimelineEntry[];
@@ -7,10 +8,11 @@ interface TimelineProps {
   to: IsoDate;
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 /** Six-month visual timeline of cycles + notable markers for the report. */
 export function Timeline({ entries, from, to }: TimelineProps) {
+  const t = useT();
+  const fmt = useFmt();
+  const monthFmt = new Intl.DateTimeFormat(LOCALES[t.lang], { month: "short" });
   const total = Math.max(1, daysBetween(from, to));
   const pctFor = (d: IsoDate) => (daysBetween(from, d) / total) * 100;
 
@@ -22,7 +24,7 @@ export function Timeline({ entries, from, to }: TimelineProps) {
   while (m <= end) {
     const iso = `${m.getFullYear()}-${`${m.getMonth() + 1}`.padStart(2, "0")}-01`;
     const p = pctFor(iso);
-    if (p >= 0 && p <= 100) ticks.push({ pct: p, label: MONTHS[m.getMonth()] });
+    if (p >= 0 && p <= 100) ticks.push({ pct: p, label: monthFmt.format(m) });
     m = new Date(m.getFullYear(), m.getMonth() + 1, 1);
   }
 
@@ -64,7 +66,7 @@ export function Timeline({ entries, from, to }: TimelineProps) {
               <div
                 className="absolute top-1 h-3 rounded-full bg-surface-2"
                 style={{ left: `${left}%`, width: `${Math.min(width, 100 - left)}%` }}
-                title={`Cycle ${e.cycleOrdinal} — starts ${formatMediumDate(e.startDate)}`}
+                title={`${e.cycleOrdinal} · ${fmt.mediumDate(e.startDate)}`}
               />
               <div
                 className="absolute top-1 h-3 rounded-full bg-primary"
@@ -74,7 +76,7 @@ export function Timeline({ entries, from, to }: TimelineProps) {
                 <span
                   className={`absolute top-1.5 h-2 w-2 rounded-full ${painTone}`}
                   style={{ left: `calc(${Math.min(left + periodWidth, 99)}% + 3px)` }}
-                  title={`Peak recorded pain ${e.peakPain}/10`}
+                  title={`${e.peakPain}/10`}
                 />
               )}
             </div>
@@ -84,13 +86,13 @@ export function Timeline({ entries, from, to }: TimelineProps) {
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-muted">
         <span className="flex items-center gap-1">
-          <span className="h-2 w-3 rounded-full bg-primary" /> Period
+          <span className="h-2 w-3 rounded-full bg-primary" /> {t("report.tlPeriod")}
         </span>
         <span className="flex items-center gap-1">
-          <span className="h-2 w-3 rounded-full bg-surface-2" /> Rest of cycle
+          <span className="h-2 w-3 rounded-full bg-surface-2" /> {t("report.tlRest")}
         </span>
         <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-notice" /> Peak pain ≥ 7/10
+          <span className="h-2 w-2 rounded-full bg-notice" /> {t("report.tlPeak")}
         </span>
       </div>
     </div>

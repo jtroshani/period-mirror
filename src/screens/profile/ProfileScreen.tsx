@@ -4,6 +4,7 @@ import { AppBar } from "@/components/ui/AppBar";
 import { Screen, Stack } from "@/components/layout/Screen";
 import { Card, Badge, Button, ListRow, Divider, Switch } from "@/components/ui/primitives";
 import { Sheet } from "@/components/ui/Sheet";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import {
   IconShield,
@@ -20,10 +21,12 @@ import {
 import { brand } from "@/branding/brand";
 import { useAppStore } from "@/store/useAppStore";
 import { useUser } from "@/store/selectors";
+import { useT } from "@/i18n";
 import { downloadText } from "@/utils/download";
 
 export function ProfileScreen() {
   const navigate = useNavigate();
+  const t = useT();
   const user = useUser();
   const mode = useAppStore((s) => s.mode);
   const tier = useAppStore((s) => s.subscriptionTier);
@@ -44,13 +47,18 @@ export function ProfileScreen() {
     .toUpperCase();
 
   const doExport = async () => {
-    const json = await exportData();
-    downloadText(`period-mirror-export-${new Date().toISOString().slice(0, 10)}.json`, json);
+    downloadText(
+      `period-mirror-export-${new Date().toISOString().slice(0, 10)}.json`,
+      await exportData(),
+    );
   };
+
+  const tierLabel =
+    tier === "free" ? t("profile.tierFree") : tier === "premium" ? t("profile.tierPremium") : t("profile.tierProfessional");
 
   return (
     <>
-      <AppBar title="Profile" />
+      <AppBar title={t("profile.title")} />
       <Screen>
         <Stack>
           <Card className="flex items-center gap-4">
@@ -59,26 +67,31 @@ export function ProfileScreen() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate font-display text-lg text-ink">
-                {user?.displayName ?? "Your profile"}
+                {user?.displayName ?? t("profile.yourProfile")}
               </p>
               <div className="mt-1 flex flex-wrap gap-1.5">
-                <Badge tone={tier === "free" ? "neutral" : "primary"}>
-                  {tier === "free" ? "Free" : tier === "premium" ? "Premium" : "Professional"}
-                </Badge>
-                {user?.isDemo && <Badge tone="notice">Demo · fictional data</Badge>}
+                <Badge tone={tier === "free" ? "neutral" : "primary"}>{tierLabel}</Badge>
+                {user?.isDemo && <Badge tone="notice">{t("profile.demoBadge")}</Badge>}
               </div>
             </div>
           </Card>
 
-          {/* Theme quick control */}
           <Card>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
+                <IconInfo size={18} className="text-muted" />
+                <span className="text-[15px] text-ink">{t("profile.language")}</span>
+              </div>
+              <LanguageToggle />
+            </div>
+            <Divider className="my-3" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
                 <IconLeaf size={18} className="text-muted" />
-                <span className="text-[15px] text-ink">Match system dark mode</span>
+                <span className="text-[15px] text-ink">{t("profile.matchSystemDark")}</span>
               </div>
               <Switch
-                label="Match system dark mode"
+                label={t("profile.matchSystemDark")}
                 checked={settings.theme === "system"}
                 onChange={(on) => setSettings({ theme: on ? "system" : "light" })}
               />
@@ -87,10 +100,10 @@ export function ProfileScreen() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <IconInfo size={18} className="text-muted" />
-                <span className="text-[15px] text-ink">Show predicted fertile window</span>
+                <span className="text-[15px] text-ink">{t("profile.showFertile")}</span>
               </div>
               <Switch
-                label="Show predicted fertile window"
+                label={t("profile.showFertile")}
                 checked={settings.showFertileWindow}
                 onChange={(on) => setSettings({ showFertileWindow: on })}
               />
@@ -100,28 +113,28 @@ export function ProfileScreen() {
           <Card padded={false} className="divide-y divide-line overflow-hidden">
             <ListRow
               icon={<IconShield size={20} />}
-              title="Data & Privacy"
-              subtitle="Consent, exports, shared reports"
+              title={t("profile.dataPrivacy")}
+              subtitle={t("profile.dataPrivacySub")}
               right={<IconChevronRight size={18} />}
               onClick={() => navigate("/profile/privacy")}
             />
             <ListRow
               icon={<IconDevice size={20} />}
-              title="Connected devices"
-              subtitle="Apple Health, wearables (sample data)"
+              title={t("profile.connectedDevices")}
+              subtitle={t("profile.connectedDevicesSub")}
               right={<IconChevronRight size={18} />}
               onClick={() => navigate("/profile/devices")}
             />
             <ListRow
               icon={<IconBell size={20} />}
-              title="Notifications"
+              title={t("profile.notifications")}
               right={<IconChevronRight size={18} />}
               onClick={() => setSheet("notifications")}
             />
             <ListRow
               icon={<IconSparkle size={20} />}
-              title="Subscription"
-              subtitle="Free · Premium · Professional"
+              title={t("profile.subscription")}
+              subtitle={t("profile.subscriptionSub")}
               right={<IconChevronRight size={18} />}
               onClick={() => navigate("/profile/subscription")}
             />
@@ -130,40 +143,39 @@ export function ProfileScreen() {
           <Card padded={false} className="divide-y divide-line overflow-hidden">
             <ListRow
               icon={<IconDownload size={20} />}
-              title="Export my data"
-              subtitle="Download everything as JSON"
+              title={t("profile.exportData")}
+              subtitle={t("profile.exportDataSub")}
               onClick={doExport}
             />
             <ListRow
               icon={<IconTrash size={20} />}
-              title="Delete my data"
-              subtitle="Remove everything from this device"
+              title={t("profile.deleteData")}
+              subtitle={t("profile.deleteDataSub")}
               onClick={() => setSheet("delete")}
             />
           </Card>
 
           <Card padded={false} className="divide-y divide-line overflow-hidden">
-            <ListRow icon={<IconHelp size={20} />} title="Help" onClick={() => setSheet("help")} />
+            <ListRow icon={<IconHelp size={20} />} title={t("profile.help")} onClick={() => setSheet("help")} />
             <ListRow
               icon={<IconInfo size={20} />}
-              title={`About ${brand.name}`}
+              title={t("profile.about", { brand: brand.name })}
               right={<IconChevronRight size={18} />}
               onClick={() => navigate("/profile/about")}
             />
             <ListRow
               icon={<IconShield size={20} />}
-              title="Medical disclaimer"
+              title={t("profile.medicalDisclaimer")}
               onClick={() => setSheet("disclaimer")}
             />
           </Card>
 
-          {/* Demo controls */}
           <Card>
-            <p className="pm-label mb-2">Demo</p>
+            <p className="pm-label mb-2">{t("profile.demo")}</p>
             {mode === "demo" ? (
               <div className="flex flex-col gap-2">
                 <Button variant="secondary" onClick={resetDemo}>
-                  Reset demo data
+                  {t("profile.resetDemo")}
                 </Button>
                 <Button
                   variant="quiet"
@@ -172,14 +184,11 @@ export function ProfileScreen() {
                     navigate("/welcome", { replace: true });
                   }}
                 >
-                  Exit demo
+                  {t("profile.exitDemo")}
                 </Button>
               </div>
             ) : (
-              <p className="text-sm text-muted">
-                You're using your own data. Demo mode can be started from the
-                welcome screen.
-              </p>
+              <p className="text-sm text-muted">{t("profile.ownDataNote")}</p>
             )}
           </Card>
 
@@ -187,48 +196,33 @@ export function ProfileScreen() {
         </Stack>
       </Screen>
 
-      <Sheet open={sheet === "notifications"} onClose={() => setSheet(null)} title="Notifications">
-        <p className="text-sm text-muted">
-          Reminders are represented in the prototype but not scheduled. In a native
-          app these would be local notifications, off by default.
-        </p>
+      <Sheet open={sheet === "notifications"} onClose={() => setSheet(null)} title={t("profile.notifications")}>
+        <p className="text-sm text-muted">{t("profile.notifBody")}</p>
         <div className="mt-4 space-y-3">
-          {["Gentle daily check-in reminder", "Predicted period approaching", "New Mirror insight"].map(
-            (l) => (
-              <div key={l} className="flex items-center justify-between">
-                <span className="text-[15px] text-ink">{l}</span>
-                <Switch label={l} checked={false} onChange={() => {}} />
-              </div>
-            ),
-          )}
+          {[t("profile.notif1"), t("profile.notif2"), t("profile.notif3")].map((l) => (
+            <div key={l} className="flex items-center justify-between">
+              <span className="text-[15px] text-ink">{l}</span>
+              <Switch label={l} checked={false} onChange={() => {}} />
+            </div>
+          ))}
         </div>
       </Sheet>
 
-      <Sheet open={sheet === "help"} onClose={() => setSheet(null)} title="Help">
+      <Sheet open={sheet === "help"} onClose={() => setSheet(null)} title={t("profile.help")}>
         <div className="space-y-3 text-sm leading-relaxed text-muted">
-          <p>
-            <strong className="text-ink">{brand.name}</strong> learns what's typical
-            for you and highlights changes from your own pattern. It never
-            diagnoses.
-          </p>
-          <p>
-            Log a little each day, or describe how you feel in the check-in. After
-            a few cycles, the Mirror becomes more useful.
-          </p>
-          <p>Bring the Report to an appointment so you don't have to remember everything.</p>
+          <p>{t("profile.helpP1", { brand: brand.name })}</p>
+          <p>{t("profile.helpP2")}</p>
+          <p>{t("profile.helpP3")}</p>
         </div>
       </Sheet>
 
-      <Sheet open={sheet === "disclaimer"} onClose={() => setSheet(null)} title="Medical disclaimer">
-        <p className="text-sm leading-relaxed text-ink">{brand.medicalDisclaimerLong}</p>
+      <Sheet open={sheet === "disclaimer"} onClose={() => setSheet(null)} title={t("profile.medicalDisclaimer")}>
+        <p className="text-sm leading-relaxed text-ink">{t("disclaimer.long")}</p>
       </Sheet>
 
-      <Sheet open={sheet === "delete"} onClose={() => setSheet(null)} title="Delete my data?">
+      <Sheet open={sheet === "delete"} onClose={() => setSheet(null)} title={t("profile.deleteTitle")}>
         <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-muted">
-            This permanently removes all entries, check-ins, settings and reports
-            from this device. This can't be undone.
-          </p>
+          <p className="text-sm leading-relaxed text-muted">{t("profile.deleteBody")}</p>
           <Button
             block
             variant="danger"
@@ -239,10 +233,10 @@ export function ProfileScreen() {
               navigate("/welcome", { replace: true });
             }}
           >
-            Delete everything
+            {t("profile.deleteConfirm")}
           </Button>
           <Button block variant="quiet" onClick={() => setSheet(null)}>
-            Keep my data
+            {t("profile.deleteKeep")}
           </Button>
         </div>
       </Sheet>

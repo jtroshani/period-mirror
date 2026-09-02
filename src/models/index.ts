@@ -56,6 +56,9 @@ export type CyclePhase = "menstrual" | "follicular" | "ovulatory" | "luteal";
 
 export type RegularitySelfReport = "regular" | "irregular" | "not_sure";
 
+/** Supported UI languages. */
+export type Lang = "en" | "it";
+
 export type SubscriptionTier = "free" | "premium" | "professional";
 
 export type DataSource =
@@ -238,6 +241,7 @@ export interface SharedReportGrant {
 }
 
 export interface AppSettings {
+  language: Lang;
   theme: "light" | "dark" | "system";
   showFertileWindow: boolean;
   weekStartsOn: 0 | 1;

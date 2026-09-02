@@ -13,6 +13,12 @@ rework.
 **Open offline:** download the repo and double-click [`docs/index.html`](docs/index.html)
 (one self-contained file — no server, no build).
 
+**🌐 Bilingual — English & Italian.** Switch with the EN / IT toggle on the
+welcome screen, during onboarding, or in Profile. The choice persists and
+localises everything, including the doctor-facing report and every
+engine-generated insight (`src/i18n/` — `dict.ts` for UI strings, `copy.ts`
+rebuilds the baseline/comparison/trend wording, `format.ts` for locale dates).
+
 ---
 
 ## Product concept

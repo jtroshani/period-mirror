@@ -18,67 +18,69 @@ import {
 } from "@/components/ui/icons";
 import { useAppStore } from "@/store/useAppStore";
 import {
+  useBaseline,
+  useComparisons,
   useCyclePosition,
   useTodayEntry,
-  useTodayInsight,
   useUser,
 } from "@/store/selectors";
-import { todayIso, formatLongDate } from "@/utils/date";
-import { label, energyWord } from "@/utils/format";
+import { useFmt, useT } from "@/i18n";
+import { todayMirrorLine } from "@/i18n/copy";
+import { todayIso } from "@/utils/date";
 import { evaluateEntry } from "@/engine/safety/safetyEngine";
-import { MOOD_OPTIONS, BLEEDING_OPTIONS } from "@/features/logging/options";
+import { BLEEDING_OPTIONS, MOOD_OPTIONS } from "@/features/logging/options";
 import type { BleedingLevel, Mood } from "@/models";
-
-function greeting(name?: string) {
-  const h = new Date().getHours();
-  const base = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  return name ? `${base}, ${name.split(" ")[0]}` : base;
-}
-
-const INSIGHT_ICON = {
-  NORMAL: IconLeaf,
-  NOTICE: IconSparkle,
-  TREND: IconArrowRight,
-  INSUFFICIENT_DATA: IconClock,
-} as const;
 
 export function TodayScreen() {
   const navigate = useNavigate();
+  const t = useT();
+  const fmt = useFmt();
   const user = useUser();
   const today = todayIso();
   const entry = useTodayEntry();
   const position = useCyclePosition();
-  const insight = useTodayInsight();
+  const comparisons = useComparisons();
+  const baseline = useBaseline();
   const upsertEntry = useAppStore((s) => s.upsertEntry);
   const showFertile = useAppStore((s) => s.settings.showFertileWindow);
 
-  const safety = useMemo(
-    () => (entry ? evaluateEntry(entry, today) : null),
-    [entry, today],
+  const safety = useMemo(() => (entry ? evaluateEntry(entry, today) : null), [entry, today]);
+  const mirrorLine = useMemo(
+    () => todayMirrorLine(t.lang, comparisons, baseline.trends),
+    [t.lang, comparisons, baseline.trends],
   );
 
   const selectedMoods = entry?.mood?.moods ?? [];
-  const InsightIcon = insight ? INSIGHT_ICON[insight.category] : IconLeaf;
+
+  const hour = new Date().getHours();
+  const greetingBase =
+    hour < 12
+      ? t("today.greetingMorning")
+      : hour < 18
+        ? t("today.greetingAfternoon")
+        : t("today.greetingEvening");
+  const greeting = user?.displayName
+    ? t("today.greetingNamed", { greeting: greetingBase, name: user.displayName.split(" ")[0] })
+    : greetingBase;
 
   const centerTop = position
-    ? position.isPeriod && position.periodDay
-      ? `Day ${position.periodDay}`
-      : `Day ${position.cycleDay}`
+    ? t(position.isPeriod && position.periodDay ? "today.periodDay" : "today.cycleDay", {
+        n: position.isPeriod && position.periodDay ? position.periodDay : position.cycleDay,
+      })
     : "—";
   const centerBottom = position
     ? position.isPeriod
-      ? "of your period"
-      : `${label(position.phase)} phase`
-    : "Add a period to begin";
+      ? t("today.ofYourPeriod")
+      : t("today.phaseLabel", { phase: t.enum("phase", position.phase).toLowerCase() })
+    : t("today.addPeriodToBegin");
 
   return (
     <>
-      <AppBar greeting={greeting(user?.displayName)} title={formatLongDate(today)} />
+      <AppBar greeting={greeting} title={fmt.longDate(today)} />
       <Screen>
         <Stack>
           {safety && <SafetyBanner notice={safety} />}
 
-          {/* Current cycle */}
           <Card className="flex flex-col items-center gap-3 pt-6">
             <CycleRing
               cycleLength={Math.round(
@@ -98,76 +100,64 @@ export function TodayScreen() {
               <p className="text-sm text-muted">
                 {position.daysUntilNextPeriod > 0 ? (
                   <>
-                    Next period in about{" "}
+                    {t("today.nextPeriodIn")}{" "}
                     <span className="font-semibold text-ink">
-                      {position.daysUntilNextPeriod} days
+                      {t("onboarding.daysN", { n: position.daysUntilNextPeriod })}
                     </span>{" "}
-                    <Badge tone="neutral">predicted</Badge>
+                    <Badge tone="neutral">{t("common.predicted")}</Badge>
                   </>
                 ) : (
-                  <>A new period may be due — log it when it starts.</>
+                  <>{t("today.nextPeriodDue")}</>
                 )}
               </p>
             )}
           </Card>
 
-          {/* Today's check-in */}
           <Card className="bg-primary text-white">
             <div className="flex items-start gap-3">
               <span className="mt-0.5 rounded-full bg-white/15 p-2">
                 <IconHeart size={20} />
               </span>
               <div className="flex-1">
-                <h2 className="font-display text-lg">Today's check-in</h2>
-                <p className="mt-1 text-sm text-white/80">
-                  Tell me how you feel in your own words. I'll help turn it into
-                  something you can save.
-                </p>
+                <h2 className="font-display text-lg">{t("today.checkInTitle")}</h2>
+                <p className="mt-1 text-sm text-white/80">{t("today.checkInBody")}</p>
                 <button
                   onClick={() => navigate("/checkin")}
                   className="pm-pressable mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary"
                 >
-                  How do I feel today?
+                  {t("today.checkInCta")}
                   <IconArrowRight size={18} />
                 </button>
               </div>
             </div>
           </Card>
 
-          {/* Quick log */}
           <div>
             <SectionLabel
               action={
-                <button
-                  className="text-sm font-medium text-primary"
-                  onClick={() => navigate("/log")}
-                >
-                  Open full log
+                <button className="text-sm font-medium text-primary" onClick={() => navigate("/log")}>
+                  {t("today.openFullLog")}
                 </button>
               }
             >
-              Quick log
+              {t("today.quickLog")}
             </SectionLabel>
             <Card padded className="space-y-4">
-              <QuickBlock icon={<IconDrop size={16} />} title="Bleeding">
+              <QuickBlock icon={<IconDrop size={16} />} title={t("today.qlBleeding")}>
                 <div className="flex flex-wrap gap-2">
                   {BLEEDING_OPTIONS.map((o) => (
                     <Chip
                       key={o.value}
                       selected={entry?.bleeding?.level === o.value}
-                      onClick={() =>
-                        upsertEntry(today, {
-                          bleeding: { level: o.value as BleedingLevel },
-                        })
-                      }
+                      onClick={() => upsertEntry(today, { bleeding: { level: o.value as BleedingLevel } })}
                     >
-                      {o.label}
+                      {t.enum("bleeding", o.value)}
                     </Chip>
                   ))}
                 </div>
               </QuickBlock>
 
-              <QuickBlock icon={<IconHeart size={16} />} title="Mood">
+              <QuickBlock icon={<IconHeart size={16} />} title={t("today.qlMood")}>
                 <div className="flex flex-wrap gap-2">
                   {MOOD_OPTIONS.map((o) => {
                     const on = selectedMoods.includes(o.value);
@@ -185,38 +175,35 @@ export function TodayScreen() {
                           })
                         }
                       >
-                        {o.label}
+                        {t.enum("mood", o.value)}
                       </Chip>
                     );
                   })}
                 </div>
               </QuickBlock>
 
-              <QuickBlock icon={<IconLeaf size={16} />} title="Energy">
+              <QuickBlock icon={<IconLeaf size={16} />} title={t("today.qlEnergy")}>
                 <Slider
-                  label="How's your energy?"
+                  label={t("today.qlEnergyQ")}
                   min={1}
                   max={5}
                   value={entry?.energy?.level ?? 3}
-                  ends={["Very low", "Very high"]}
-                  format={(v) => energyWord(v)}
-                  onChange={(v) =>
-                    upsertEntry(today, { energy: { level: v as 1 | 2 | 3 | 4 | 5 } })
-                  }
+                  ends={[t("log.energyEndLow"), t("log.energyEndHigh")]}
+                  format={(v) => t.energy(v)}
+                  onChange={(v) => upsertEntry(today, { energy: { level: v as 1 | 2 | 3 | 4 | 5 } })}
                 />
               </QuickBlock>
 
               <div className="grid grid-cols-3 gap-2 pt-1">
-                <MiniLink label="Pain" onClick={() => navigate("/log#pain")} />
-                <MiniLink label="Sleep" onClick={() => navigate("/log#sleep")} />
-                <MiniLink label="Symptoms" onClick={() => navigate("/log#symptoms")} />
+                <MiniLink label={t("today.qlPain")} onClick={() => navigate("/log#pain")} />
+                <MiniLink label={t("today.qlSleep")} onClick={() => navigate("/log#sleep")} />
+                <MiniLink label={t("today.qlSymptoms")} onClick={() => navigate("/log#symptoms")} />
               </div>
             </Card>
           </div>
 
-          {/* Today's mirror */}
           <div>
-            <SectionLabel>Today's Mirror</SectionLabel>
+            <SectionLabel>{t("today.mirrorSection")}</SectionLabel>
             <Card
               className="pm-pressable text-left"
               as="article"
@@ -225,25 +212,18 @@ export function TodayScreen() {
             >
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 rounded-full bg-primary-soft p-2 text-primary">
-                  <InsightIcon size={18} />
+                  {mirrorLine ? <IconSparkle size={18} /> : <IconClock size={18} />}
                 </span>
                 <div className="flex-1">
-                  {insight ? (
+                  {mirrorLine ? (
                     <>
-                      <p className="text-[15px] font-medium text-ink">
-                        {insight.summary}
-                      </p>
-                      <p className="mt-1.5 text-sm text-primary">Open My Mirror →</p>
+                      <p className="text-[15px] font-medium text-ink">{mirrorLine}</p>
+                      <p className="mt-1.5 text-sm text-primary">{t("today.openMirror")} →</p>
                     </>
                   ) : (
                     <>
-                      <p className="text-[15px] font-medium text-ink">
-                        We're still learning your pattern.
-                      </p>
-                      <p className="mt-1 text-sm text-muted">
-                        Keep logging and your Mirror will start comparing this cycle
-                        with your usual.
-                      </p>
+                      <p className="text-[15px] font-medium text-ink">{t("today.learningLine")}</p>
+                      <p className="mt-1 text-sm text-muted">{t("today.learningBody")}</p>
                     </>
                   )}
                 </div>
@@ -251,19 +231,15 @@ export function TodayScreen() {
             </Card>
           </div>
 
-          {/* Today's history */}
           <div>
             <SectionLabel
               action={
-                <button
-                  className="text-sm font-medium text-primary"
-                  onClick={() => navigate("/log")}
-                >
-                  Edit
+                <button className="text-sm font-medium text-primary" onClick={() => navigate("/log")}>
+                  {t("common.edit")}
                 </button>
               }
             >
-              Today's history
+              {t("today.historyTitle")}
             </SectionLabel>
             <Card>
               <TodaySummary entry={entry} />
@@ -297,49 +273,46 @@ function QuickBlock({
   );
 }
 
-function MiniLink({ label: l, onClick }: { label: string; onClick: () => void }) {
+function MiniLink({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       className="pm-pressable rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-ink"
     >
-      + {l}
+      + {label}
     </button>
   );
 }
 
 function TodaySummary({ entry }: { entry: ReturnType<typeof useTodayEntry> }) {
+  const t = useT();
+  const fmt = useFmt();
   if (!entry) {
-    return (
-      <p className="text-sm text-muted">
-        Nothing logged yet today. Use Quick log above or the check-in — partial is
-        completely fine.
-      </p>
-    );
+    return <p className="text-sm text-muted">{t("today.historyEmpty")}</p>;
   }
   const rows: { k: string; v: string }[] = [];
-  if (entry.bleeding) rows.push({ k: "Bleeding", v: label(entry.bleeding.level) });
+  if (entry.bleeding) rows.push({ k: t("today.rowBleeding"), v: t.enum("bleeding", entry.bleeding.level) });
   if (entry.pain)
     rows.push({
-      k: "Pain",
+      k: t("today.rowPain"),
       v: `${entry.pain.level}/10${
         entry.pain.locations.length
-          ? ` · ${entry.pain.locations.map(label).join(", ")}`
+          ? ` · ${entry.pain.locations.map((l) => t.enum("painLocation", l)).join(", ")}`
           : ""
       }`,
     });
   if (entry.mood?.moods.length)
-    rows.push({ k: "Mood", v: entry.mood.moods.map(label).join(", ") });
-  if (entry.energy) rows.push({ k: "Energy", v: energyWord(entry.energy.level) });
-  if (entry.sleep?.hours != null)
-    rows.push({ k: "Sleep", v: `${entry.sleep.hours}h` });
+    rows.push({ k: t("today.rowMood"), v: entry.mood.moods.map((m) => t.enum("mood", m)).join(", ") });
+  if (entry.energy) rows.push({ k: t("today.rowEnergy"), v: t.energy(entry.energy.level) });
+  if (entry.sleep?.hours != null) rows.push({ k: t("today.rowSleep"), v: fmt.hours(entry.sleep.hours) });
   if (entry.symptoms.length)
-    rows.push({ k: "Symptoms", v: entry.symptoms.map((s) => label(s.type)).join(", ") });
-  if (entry.notes) rows.push({ k: "Note", v: entry.notes });
+    rows.push({
+      k: t("today.rowSymptoms"),
+      v: entry.symptoms.map((s) => t.enum("symptom", s.type)).join(", "),
+    });
+  if (entry.notes) rows.push({ k: t("today.rowNote"), v: entry.notes });
 
-  if (rows.length === 0) {
-    return <p className="text-sm text-muted">Nothing logged yet today.</p>;
-  }
+  if (rows.length === 0) return <p className="text-sm text-muted">{t("today.historyEmpty")}</p>;
   return (
     <dl className="divide-y divide-line">
       {rows.map((r) => (

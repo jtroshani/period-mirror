@@ -1,95 +1,104 @@
 import type { HealthReport } from "@/models";
 import { brand } from "@/branding/brand";
-import { formatLongDate } from "@/utils/date";
-import { formatHours } from "@/utils/format";
+import { useFmt, useT } from "@/i18n";
 import { Timeline } from "@/components/charts/Timeline";
 
 /**
  * The doctor-friendly one-page summary. Designed for a patient/clinician
- * conversation, not as an analytics dashboard. Colour is minimal so it prints
- * cleanly. Purely presentational — data comes from ReportService.
+ * conversation, not an analytics dashboard. Minimal colour so it prints
+ * cleanly. Purely presentational — data + wording come from ReportService.
  */
 export function ReportDocument({ report }: { report: HealthReport }) {
+  const t = useT();
+  const fmt = useFmt();
   const c = report.cycleSummary;
   return (
     <article className="pm-print-doc mx-auto max-w-[720px] bg-white p-7 text-[13px] leading-relaxed text-[#211e1c]">
-      {/* Header */}
       <header className="flex items-start justify-between border-b border-[#e8e3dd] pb-4">
         <div>
           <p className="font-display text-xl font-semibold">{brand.name}</p>
-          <p className="mt-0.5 text-[12px] text-[#6c6762]">{brand.reportName}</p>
+          <p className="mt-0.5 text-[12px] text-[#6c6762]">{t("report.docName")}</p>
         </div>
         <div className="text-right text-[12px] text-[#6c6762]">
           <p>
-            <span className="font-semibold text-[#211e1c]">Period:</span> {report.range.label}
+            <span className="font-semibold text-[#211e1c]">{t("report.docPeriod")}:</span>{" "}
+            {report.range.label}
           </p>
-          <p>{formatLongDate(report.range.from)} – {formatLongDate(report.range.to)}</p>
-          <p className="mt-1">Generated {formatLongDate(report.generatedAt.slice(0, 10))}</p>
-          <p>Subject: {report.subjectLabel}</p>
+          <p>
+            {fmt.longDate(report.range.from)} – {fmt.longDate(report.range.to)}
+          </p>
+          <p className="mt-1">
+            {t("report.docGenerated")} {fmt.longDate(report.generatedAt.slice(0, 10))}
+          </p>
+          <p>
+            {t("report.docSubject")}: {report.subjectLabel}
+          </p>
         </div>
       </header>
 
       <div className="mt-5 grid grid-cols-2 gap-x-8 gap-y-5">
-        <Section title="Cycle summary">
-          <KV k="Recorded cycles" v={`${c.recordedCycles}`} />
-          <KV k="Average length" v={c.averageLengthDays != null ? `${c.averageLengthDays} days` : "—"} />
+        <Section title={t("report.secCycleSummary")}>
+          <KV k={t("report.kRecordedCycles")} v={`${c.recordedCycles}`} />
+          <KV k={t("report.kAvgLength")} v={c.averageLengthDays != null ? t("report.daysN", { n: c.averageLengthDays }) : "—"} />
           <KV
-            k="Shortest / longest"
+            k={t("report.kShortLong")}
             v={
               c.shortestLengthDays != null
-                ? `${c.shortestLengthDays} / ${c.longestLengthDays} days`
+                ? `${c.shortestLengthDays} / ${c.longestLengthDays} ${t("common.days")}`
                 : "—"
             }
           />
-          <KV k="Variability (SD)" v={c.variabilityDays != null ? `±${c.variabilityDays} days` : "—"} />
+          <KV k={t("report.kVariabilitySd")} v={c.variabilityDays != null ? `±${c.variabilityDays} ${t("common.days")}` : "—"} />
           <KV
-            k="Average period"
-            v={c.averagePeriodDurationDays != null ? `${c.averagePeriodDurationDays} days` : "—"}
+            k={t("report.kAvgPeriod")}
+            v={c.averagePeriodDurationDays != null ? t("report.daysN", { n: c.averagePeriodDurationDays }) : "—"}
           />
         </Section>
 
-        <Section title="Pain">
-          <KV k="Typical level" v={report.pain.typicalLevel != null ? `${report.pain.typicalLevel} / 10` : "—"} />
-          <KV k="Highest recorded" v={report.pain.highestRecorded != null ? `${report.pain.highestRecorded} / 10` : "—"} />
-          <KV k="High-pain days (≥7)" v={`${report.pain.highPainDays}`} />
-          <KV k="Trend" v={report.pain.trend} />
+        <Section title={t("report.secPain")}>
+          <KV k={t("report.kTypicalLevel")} v={report.pain.typicalLevel != null ? `${report.pain.typicalLevel} / 10` : "—"} />
+          <KV k={t("report.kHighest")} v={report.pain.highestRecorded != null ? `${report.pain.highestRecorded} / 10` : "—"} />
+          <KV k={t("report.kHighPainDays")} v={`${report.pain.highPainDays}`} />
+          <KV k={t("report.kTrend")} v={report.pain.trend} />
         </Section>
 
-        <Section title="Bleeding">
+        <Section title={t("report.secBleeding")}>
           {report.bleeding.recorded ? (
             <>
-              <KV k="Typical pattern" v={report.bleeding.typicalPattern} />
-              <KV k="Days reported heavy" v={`${report.bleeding.heavyDays}`} />
-              <KV k="Change" v={report.bleeding.changeNote} />
+              <KV k={t("report.kTypicalPattern")} v={report.bleeding.typicalPattern} />
+              <KV k={t("report.kDaysHeavy")} v={`${report.bleeding.heavyDays}`} />
+              <KV k={t("report.kChange")} v={report.bleeding.changeNote} />
             </>
           ) : (
-            <p className="text-[#6c6762]">Not recorded during this period.</p>
+            <p className="text-[#6c6762]">{t("report.bleedingNotRecorded")}</p>
           )}
         </Section>
 
-        <Section title="Energy & sleep">
-          <KV k="Average energy" v={report.energy.average != null ? `${report.energy.average} / 5` : "—"} />
-          <KV k="Energy trend" v={report.energy.trend} />
-          <KV k="Average sleep" v={report.sleep.averageHours != null ? formatHours(report.sleep.averageHours) : "—"} />
-          <KV k="Sleep trend" v={report.sleep.trend} />
+        <Section title={t("report.secEnergySleep")}>
+          <KV k={t("report.kAvgEnergy")} v={report.energy.average != null ? `${report.energy.average} / 5` : "—"} />
+          <KV k={t("report.kEnergyTrend")} v={report.energy.trend} />
+          <KV k={t("report.kAvgSleep")} v={report.sleep.averageHours != null ? fmt.hours(report.sleep.averageHours) : "—"} />
+          <KV k={t("report.kSleepTrend")} v={report.sleep.trend} />
         </Section>
 
-        <Section title="Most frequent symptoms">
+        <Section title={t("report.secSymptoms")}>
           {report.symptoms.length ? (
             <ul className="space-y-0.5">
               {report.symptoms.map((s) => (
                 <li key={s.label} className="flex justify-between">
                   <span>{s.label}</span>
-                  <span className="text-[#6c6762]">{s.daysLogged} days</span>
+                  <span className="text-[#6c6762]">
+                    {s.daysLogged} {t("common.days")}
+                  </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-[#6c6762]">None logged.</p>
+            <p className="text-[#6c6762]">{t("report.noneLogged")}</p>
           )}
         </Section>
 
-        <Section title="Other health signals">
+        <Section title={t("report.secOther")}>
           {report.otherSignals.length ? (
             <ul className="space-y-0.5">
               {report.otherSignals.map((s) => (
@@ -103,42 +112,36 @@ export function ReportDocument({ report }: { report: HealthReport }) {
               ))}
             </ul>
           ) : (
-            <p className="text-[#6c6762]">No connected-device data in range.</p>
+            <p className="text-[#6c6762]">{t("report.noDeviceData")}</p>
           )}
         </Section>
       </div>
 
-      {/* Changes worth discussing */}
       <div className="mt-6 rounded-lg border border-[#e8e3dd] bg-[#faf8f5] p-4">
         <h3 className="text-[12px] font-semibold uppercase tracking-wide text-[#6c6762]">
-          Patterns that may be useful to discuss with a healthcare professional
+          {t("report.discussHeading")}
         </h3>
         <ul className="mt-2 list-disc space-y-1 pl-4">
           {report.changesToDiscuss.map((x, i) => (
             <li key={i}>{x}</li>
           ))}
         </ul>
-        <p className="mt-2 text-[11px] text-[#6c6762]">
-          These are comparisons with this person's own recorded history. They are
-          not diagnoses or assessments of severity.
-        </p>
+        <p className="mt-2 text-[11px] text-[#6c6762]">{t("report.discussFootnote")}</p>
       </div>
 
-      {/* Timeline */}
       <div className="mt-6">
         <h3 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[#6c6762]">
-          Cycle timeline
+          {t("report.timelineHeading")}
         </h3>
         {report.timeline.length ? (
           <Timeline entries={report.timeline} from={report.range.from} to={report.range.to} />
         ) : (
-          <p className="text-[#6c6762]">Not enough completed cycles in range to chart.</p>
+          <p className="text-[#6c6762]">{t("report.timelineEmpty")}</p>
         )}
       </div>
 
-      {/* Footer */}
       <footer className="mt-7 border-t border-[#e8e3dd] pt-3 text-[11px] text-[#6c6762]">
-        <p>{brand.reportAttribution}</p>
+        <p>{t("disclaimer.reportAttribution")}</p>
         <p className="mt-0.5 font-medium text-[#211e1c]">{report.disclaimer}</p>
       </footer>
     </article>

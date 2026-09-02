@@ -6,10 +6,12 @@ import { IconDevice } from "@/components/ui/icons";
 import { useAppStore } from "@/store/useAppStore";
 import { KNOWN_INTEGRATIONS } from "@/services/integrations/DeviceIntegrationService";
 import { MockDeviceIntegrationService } from "@/services/integrations/MockDeviceIntegrationService";
-import { formatLongDate } from "@/utils/date";
+import { useT, useFmt } from "@/i18n";
 import type { IntegrationProvider } from "@/models";
 
 export function ConnectedDevicesScreen() {
+  const t = useT();
+  const fmt = useFmt();
   const integrations = useAppStore((s) => s.integrations);
   const setIntegration = useAppStore((s) => s.setIntegration);
   const ingestVitals = useAppStore((s) => s.ingestVitals);
@@ -32,17 +34,15 @@ export function ConnectedDevicesScreen() {
     if (connected) {
       setIntegration(await service.disconnect(provider));
     } else {
-      const next = await service.connect(provider);
-      setIntegration(next);
-      const readings = await service.sync(provider);
-      ingestVitals(readings);
+      setIntegration(await service.connect(provider));
+      ingestVitals(await service.sync(provider));
     }
     setBusy(null);
   };
 
   return (
     <>
-      <AppBar title="Connected devices" back="/profile" />
+      <AppBar title={t("devices.title")} back="/profile" />
       <Screen>
         <Stack>
           <Card className="flex items-start gap-3">
@@ -50,22 +50,16 @@ export function ConnectedDevicesScreen() {
               <IconDevice size={22} />
             </span>
             <div>
-              <p className="font-display text-lg text-ink">Sample integrations</p>
-              <p className="mt-1 text-sm text-muted">
-                These connectors are mocked in the prototype and add clearly-labelled
-                sample data. Real Apple Health, Health Connect, Fitbit, Garmin and
-                Oura adapters would sit behind the same interface.
-              </p>
+              <p className="font-display text-lg text-ink">{t("devices.sampleTitle")}</p>
+              <p className="mt-1 text-sm text-muted">{t("devices.sampleBody")}</p>
             </div>
           </Card>
 
           {!wearableConsent && (
             <Card inset className="flex items-center justify-between gap-3">
-              <p className="text-sm text-muted">
-                Wearable sync is currently off in your privacy settings.
-              </p>
+              <p className="text-sm text-muted">{t("devices.wearableOff")}</p>
               <Button size="sm" onClick={() => setConsent({ wearableSync: true })}>
-                Turn on
+                {t("common.turnOn")}
               </Button>
             </Card>
           )}
@@ -78,18 +72,18 @@ export function ConnectedDevicesScreen() {
                   <p className="mt-0.5 text-xs text-muted">{it.scopes.join(" · ")}</p>
                   {it.connected && it.lastSync && (
                     <p className="mt-0.5 text-xs text-faint">
-                      Synced {formatLongDate(it.lastSync.slice(0, 10))}
+                      {t("devices.syncedOn", { date: fmt.longDate(it.lastSync.slice(0, 10)) })}
                     </p>
                   )}
                 </div>
-                {it.connected && <Badge tone="normal">Connected</Badge>}
+                {it.connected && <Badge tone="normal">{t("devices.connected")}</Badge>}
                 <Button
                   size="sm"
                   variant={it.connected ? "quiet" : "secondary"}
                   disabled={busy === it.provider || (!wearableConsent && !it.connected)}
                   onClick={() => toggle(it.provider, it.connected)}
                 >
-                  {busy === it.provider ? "…" : it.connected ? "Disconnect" : "Connect"}
+                  {busy === it.provider ? "…" : it.connected ? t("devices.disconnect") : t("devices.connect")}
                 </Button>
               </div>
             ))}

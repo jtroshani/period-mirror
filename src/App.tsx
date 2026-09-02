@@ -5,6 +5,7 @@ import { AppScaffold } from "@/components/layout/AppScaffold";
 import { Wordmark } from "@/branding/Wordmark";
 import { useAppStore } from "@/store/useAppStore";
 import { useThemeEffect } from "@/hooks/useTheme";
+import { LOCALES } from "@/i18n";
 
 import { WelcomeScreen } from "@/screens/welcome/WelcomeScreen";
 import { OnboardingScreen } from "@/screens/onboarding/OnboardingScreen";
@@ -50,6 +51,7 @@ export default function App() {
   const hydrated = useAppStore((s) => s.hydrated);
   const hydrate = useAppStore((s) => s.hydrate);
   const mode = useAppStore((s) => s.mode);
+  const language = useAppStore((s) => s.settings.language);
   const { pathname } = useLocation();
 
   useThemeEffect();
@@ -57,6 +59,10 @@ export default function App() {
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    document.documentElement.lang = LOCALES[language] ?? "en";
+  }, [language]);
 
   // Keep viewport at top on route change.
   useEffect(() => {

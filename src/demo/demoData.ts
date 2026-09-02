@@ -342,6 +342,16 @@ export function buildDemoSnapshot(): AppSnapshot {
       updatedAt: now,
     },
     settings: {
+      language: (() => {
+        try {
+          return typeof navigator !== "undefined" &&
+            navigator.language.toLowerCase().startsWith("it")
+            ? ("it" as const)
+            : ("en" as const);
+        } catch {
+          return "en" as const;
+        }
+      })(),
       theme: "system",
       showFertileWindow: false,
       weekStartsOn: 1,

@@ -6,10 +6,11 @@ import { IconChevronLeft, IconChevronRight } from "@/components/ui/icons";
 import { DayDetailSheet } from "./DayDetailSheet";
 import { useAppStore } from "@/store/useAppStore";
 import { useCycles, useEntries, useUser } from "@/store/selectors";
+import { useFmt, useT } from "@/i18n";
+import { dowLetters } from "@/i18n/format";
 import {
   addDays,
   addMonths,
-  formatMonthYear,
   fromIso,
   startOfMonth,
   todayIso,
@@ -19,12 +20,12 @@ import {
 import { averageCycleLength, isBleedingDay, predictNextCycle } from "@/engine/cycles";
 import type { IsoDate } from "@/models";
 
-const DOW = ["S", "M", "T", "W", "T", "F", "S"];
-
 export function CalendarScreen() {
   const entries = useEntries();
   const cycles = useCycles();
   const user = useUser();
+  const t = useT();
+  const fmt = useFmt();
   const weekStartsOn = useAppStore((s) => s.settings.weekStartsOn);
   const showFertile = useAppStore((s) => s.settings.showFertileWindow);
 
@@ -33,7 +34,6 @@ export function CalendarScreen() {
 
   const today = todayIso();
 
-  // Predicted period windows (next two projected cycles).
   const predictedPeriodDays = useMemo(() => {
     const set = new Set<IsoDate>();
     const next = predictNextCycle(entries, user);
@@ -63,20 +63,19 @@ export function CalendarScreen() {
 
   const weeks = useMemo(() => buildGrid(cursor, weekStartsOn), [cursor, weekStartsOn]);
   const monthIndex = fromIso(cursor).getMonth();
-
-  const orderedDow = [...DOW.slice(weekStartsOn), ...DOW.slice(0, weekStartsOn)];
+  const orderedDow = dowLetters(t.lang, weekStartsOn);
 
   return (
     <>
-      <AppBar title="Calendar" />
+      <AppBar title={t("calendar.title")} />
       <Screen>
         <div className="mb-3 mt-1 flex items-center justify-between">
-          <h2 className="font-display text-xl text-ink">{formatMonthYear(cursor)}</h2>
+          <h2 className="font-display text-xl text-ink">{fmt.monthYear(cursor)}</h2>
           <div className="flex gap-1">
-            <IconButton label="Previous month" onClick={() => setCursor(addMonths(cursor, -1))}>
+            <IconButton label={t("common.back")} onClick={() => setCursor(addMonths(cursor, -1))}>
               <IconChevronLeft />
             </IconButton>
-            <IconButton label="Next month" onClick={() => setCursor(addMonths(cursor, 1))}>
+            <IconButton label={t("common.continue")} onClick={() => setCursor(addMonths(cursor, 1))}>
               <IconChevronRight />
             </IconButton>
           </div>
@@ -122,9 +121,7 @@ export function CalendarScreen() {
                     {hasPain && <span className="h-1.5 w-1.5 rounded-full bg-notice" />}
                     {hasSymptoms && <span className="h-1.5 w-1.5 rounded-full bg-info" />}
                   </span>
-                  {isFertile && (
-                    <span className="absolute bottom-1 h-0.5 w-4 rounded-full bg-accent/70" />
-                  )}
+                  {isFertile && <span className="absolute bottom-1 h-0.5 w-4 rounded-full bg-accent/70" />}
                 </button>
               );
             })}
@@ -132,38 +129,37 @@ export function CalendarScreen() {
         </Card>
 
         <Card className="mt-4">
-          <p className="pm-label mb-2">Legend</p>
+          <p className="pm-label mb-2">{t("calendar.legend")}</p>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-muted">
             <li className="flex items-center gap-2">
-              <span className="h-4 w-4 rounded-full bg-primary" /> Recorded period
+              <span className="h-4 w-4 rounded-full bg-primary" /> {t("calendar.legRecorded")}
             </li>
             <li className="flex items-center gap-2">
               <span className="h-4 w-4 rounded-full border border-dashed border-primary" />{" "}
-              Predicted period
+              {t("calendar.legPredicted")}
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-notice" /> Pain recorded (≥4)
+              <span className="h-1.5 w-1.5 rounded-full bg-notice" /> {t("calendar.legPain")}
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-info" /> Symptoms logged
+              <span className="h-1.5 w-1.5 rounded-full bg-info" /> {t("calendar.legSymptoms")}
             </li>
             {showFertile && (
               <li className="flex items-center gap-2">
-                <span className="h-0.5 w-4 rounded-full bg-accent/70" /> Predicted fertile
+                <span className="h-0.5 w-4 rounded-full bg-accent/70" /> {t("calendar.legFertile")}
               </li>
             )}
           </ul>
-          <p className="mt-3 text-xs text-faint">
-            Predicted days are estimates from your recent cycles — they are not
-            certain and may shift as you log more.
-          </p>
+          <p className="mt-3 text-xs text-faint">{t("calendar.predictedNote")}</p>
         </Card>
       </Screen>
 
       <DayDetailSheet
         date={selected}
         entry={selected ? entries[selected] : undefined}
-        predictedPeriod={selected ? predictedPeriodDays.has(selected) && !isBleedingDay(entries[selected]) : false}
+        predictedPeriod={
+          selected ? predictedPeriodDays.has(selected) && !isBleedingDay(entries[selected]) : false
+        }
         onClose={() => setSelected(null)}
       />
     </>
@@ -176,9 +172,7 @@ function buildGrid(monthStart: IsoDate, weekStartsOn: 0 | 1): IsoDate[][] {
   const weeks: IsoDate[][] = [];
   for (let w = 0; w < 6; w++) {
     const row: IsoDate[] = [];
-    for (let d = 0; d < 7; d++) {
-      row.push(toIso(fromIso(addDays(first, w * 7 + d))));
-    }
+    for (let d = 0; d < 7; d++) row.push(toIso(fromIso(addDays(first, w * 7 + d))));
     weeks.push(row);
   }
   return weeks;

@@ -45,7 +45,17 @@ export const DEFAULT_CONSENT: ConsentPreference = {
   updatedAt: new Date(0).toISOString(),
 };
 
+function detectLanguage(): AppSettings["language"] {
+  try {
+    const nav = typeof navigator !== "undefined" ? navigator.language : "";
+    return nav.toLowerCase().startsWith("it") ? "it" : "en";
+  } catch {
+    return "en";
+  }
+}
+
 export const DEFAULT_SETTINGS: AppSettings = {
+  language: detectLanguage(),
   theme: "system",
   showFertileWindow: false,
   weekStartsOn: 1,
@@ -253,11 +263,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  startFresh: () => set({ ...emptySnapshot(), mode: "empty", hydrated: true }),
+  startFresh: () => {
+    const language = get().settings.language;
+    const base = emptySnapshot();
+    set({ ...base, settings: { ...base.settings, language }, mode: "empty", hydrated: true });
+  },
 
-  loadDemo: () => set({ ...buildDemoSnapshot(), hydrated: true }),
+  loadDemo: () => {
+    const language = get().settings.language;
+    const demo = buildDemoSnapshot();
+    set({ ...demo, settings: { ...demo.settings, language }, hydrated: true });
+  },
 
-  resetDemo: () => set({ ...buildDemoSnapshot(), hydrated: true }),
+  resetDemo: () => {
+    const language = get().settings.language;
+    const demo = buildDemoSnapshot();
+    set({ ...demo, settings: { ...demo.settings, language }, hydrated: true });
+  },
 
   completeOnboarding: (data) => {
     const now = new Date().toISOString();
@@ -283,8 +305,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
         sources: ["manual"],
       };
     }
+    const base = emptySnapshot();
     set({
-      ...emptySnapshot(),
+      ...base,
+      settings: { ...base.settings, language: get().settings.language },
       hydrated: true,
       mode: "user",
       user,
@@ -372,7 +396,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   deleteAllData: async () => {
     await storageService.clearAll();
-    set({ ...emptySnapshot(), hydrated: true });
+    const base = emptySnapshot();
+    set({
+      ...base,
+      settings: { ...base.settings, language: get().settings.language },
+      hydrated: true,
+    });
   },
 }));
 

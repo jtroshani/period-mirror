@@ -6,23 +6,25 @@ import {
   IconReport,
   IconToday,
 } from "@/components/ui/icons";
+import { useT } from "@/i18n";
 
 const ITEMS = [
-  { to: "/today", label: "Today", Icon: IconToday },
-  { to: "/calendar", label: "Calendar", Icon: IconCalendar },
-  { to: "/mirror", label: "Mirror", Icon: IconMirror },
-  { to: "/report", label: "Report", Icon: IconReport },
-  { to: "/profile", label: "Profile", Icon: IconProfile },
-];
+  { to: "/today", key: "nav.today", Icon: IconToday },
+  { to: "/calendar", key: "nav.calendar", Icon: IconCalendar },
+  { to: "/mirror", key: "nav.mirror", Icon: IconMirror },
+  { to: "/report", key: "nav.report", Icon: IconReport },
+  { to: "/profile", key: "nav.profile", Icon: IconProfile },
+] as const;
 
 export function BottomNav() {
+  const t = useT();
   return (
     <nav
       aria-label="Primary"
       className="safe-bottom sticky bottom-0 z-30 border-t border-line bg-surface/90 backdrop-blur-md"
     >
       <ul className="mx-auto flex max-w-app items-stretch justify-around px-2 pt-1.5">
-        {ITEMS.map(({ to, label, Icon }) => (
+        {ITEMS.map(({ to, key, Icon }) => (
           <li key={to} className="flex-1">
             <NavLink
               to={to}
@@ -35,7 +37,7 @@ export function BottomNav() {
               {({ isActive }) => (
                 <>
                   <Icon size={24} strokeWidth={isActive ? 2 : 1.6} />
-                  <span>{label}</span>
+                  <span>{t(key)}</span>
                 </>
               )}
             </NavLink>

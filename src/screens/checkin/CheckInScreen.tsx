@@ -10,20 +10,72 @@ import { aiExtractionService } from "@/services/ai";
 import type { AIExtractionResult } from "@/services/ai";
 import { useAppStore } from "@/store/useAppStore";
 import { useTodayEntry } from "@/store/selectors";
+import { useT, type TFn } from "@/i18n";
 import { todayIso } from "@/utils/date";
 import { uid } from "@/utils/id";
 import type { ExtractedItem } from "@/models";
 
-const EXAMPLES = [
-  "Cramps are worse than usual and I'm exhausted",
-  "Bleeding is heavier today, plus a headache",
-  "Bloated, irritable, slept badly",
-];
-
 type Phase = "input" | "thinking" | "review" | "done";
+
+/** Rebuilds an extracted item's label/detail in the active language. */
+function describeItem(t: TFn, item: ExtractedItem): { label: string; detail?: string } {
+  const v = (item.value ?? {}) as Record<string, unknown>;
+  switch (item.field) {
+    case "pain": {
+      const locs = Array.isArray(v.locations)
+        ? (v.locations as string[]).map((l) => t.enum("painLocation", l).toLowerCase())
+        : [];
+      const label = `${t("today.qlPain")}${locs.length ? ` · ${locs.join(" & ")}` : ""}`;
+      const detail =
+        typeof v.level === "number"
+          ? t("checkin.itemPainAround", { n: v.level as number })
+          : t("checkin.itemPainNoSeverity");
+      return { label, detail };
+    }
+    case "bleeding":
+      return {
+        label: `${t("today.qlBleeding")} · ${t.enum("bleeding", String(v.level))}${
+          v.clots ? ` · ${t("log.noticedClots").toLowerCase()}` : ""
+        }`,
+        detail: item.detail,
+      };
+    case "energy":
+      return {
+        label: `${t("today.qlEnergy")} · ${
+          (v.level as number) <= 2 ? t("enums.energy.1").toLowerCase() : t("enums.energy.4").toLowerCase()
+        }`,
+      };
+    case "mood":
+      return {
+        label: `${t("today.qlMood")} · ${(v.moods as string[] ?? [])
+          .map((m) => t.enum("mood", m).toLowerCase())
+          .join(", ")}`,
+      };
+    case "sleep":
+      return {
+        label: `${t("today.qlSleep")}${v.hours != null ? ` · ${v.hours}h` : ""}${
+          v.quality ? ` · ${t.enum("sleepQuality", String(v.quality)).toLowerCase()}` : ""
+        }`,
+      };
+    case "symptom":
+      return { label: `${t("today.qlSymptoms")} · ${t.enum("symptom", String(v.type))}` };
+    case "activity":
+      return { label: `${t("log.activity")} · ${t.enum("activity", String(v.level)).toLowerCase()}` };
+    case "note":
+      return { label: t("checkin.noteToggle"), detail: t("checkin.noteToggleBody") };
+    default:
+      return { label: item.label, detail: item.detail };
+  }
+}
+
+const MODEL_LABEL: Record<string, string> = {
+  en: "On-device pattern matcher (prototype)",
+  it: "Analizzatore di pattern sul dispositivo (prototipo)",
+};
 
 export function CheckInScreen() {
   const navigate = useNavigate();
+  const t = useT();
   const today = todayIso();
   const entry = useTodayEntry();
   const addCheckIn = useAppStore((s) => s.addCheckIn);
@@ -35,6 +87,8 @@ export function CheckInScreen() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<AIExtractionResult | null>(null);
   const [items, setItems] = useState<ExtractedItem[]>([]);
+
+  const examples = [t("checkin.ex1"), t("checkin.ex2"), t("checkin.ex3")];
 
   const run = async () => {
     if (text.trim().length < 3) return;
@@ -56,12 +110,7 @@ export function CheckInScreen() {
     setItems((prev) =>
       prev.map((i) =>
         i.id === id
-          ? {
-              ...i,
-              needsSeverity: false,
-              value: { ...(i.value as object), level },
-              detail: `Around ${level}/10.`,
-            }
+          ? { ...i, needsSeverity: false, value: { ...(i.value as object), level } }
           : i,
       ),
     );
@@ -87,24 +136,21 @@ export function CheckInScreen() {
 
   return (
     <>
-      <AppBar title="How do I feel today?" back="/today" />
+      <AppBar title={t("checkin.title")} back="/today" />
       <Screen>
         {phase === "input" && (
           <Stack>
-            <p className="text-[15px] leading-relaxed text-muted">
-              Write naturally — a sentence or two about how you feel, any pain,
-              your energy, sleep or bleeding. I'll suggest things you can save.
-            </p>
+            <p className="text-[15px] leading-relaxed text-muted">{t("checkin.intro")}</p>
             <textarea
               autoFocus
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={6}
-              placeholder="e.g. I have a strange pain on my right side, I'm very tired, and today my bleeding is heavier than usual."
+              placeholder={t("checkin.placeholder")}
               className="w-full rounded-card border border-line bg-surface p-4 text-[15px] leading-relaxed text-ink placeholder:text-faint"
             />
             <div className="flex flex-wrap gap-2">
-              {EXAMPLES.map((ex) => (
+              {examples.map((ex) => (
                 <Chip key={ex} onClick={() => setText(ex)}>
                   {ex}
                 </Chip>
@@ -114,13 +160,12 @@ export function CheckInScreen() {
             <Card inset className="flex items-start gap-2 text-xs leading-relaxed text-muted">
               <IconInfo size={15} className="mt-0.5 shrink-0" />
               <span>
-                This structures what you describe — it does not diagnose or name
-                conditions. {aiConsent ? "" : "AI processing is currently turned off in your privacy settings, so this runs entirely on your device."}
+                {t("checkin.aiNote")} {aiConsent ? "" : t("checkin.aiOffNote")}
               </span>
             </Card>
 
             <Button block size="lg" icon={<IconSparkle size={18} />} onClick={run} disabled={text.trim().length < 3}>
-              Read my words
+              {t("checkin.readCta")}
             </Button>
           </Stack>
         )}
@@ -130,7 +175,7 @@ export function CheckInScreen() {
             <span className="animate-pulse text-primary">
               <IconSparkle size={32} />
             </span>
-            <p className="text-sm text-muted">Reading your words…</p>
+            <p className="text-sm text-muted">{t("checkin.reading")}</p>
           </div>
         )}
 
@@ -141,24 +186,19 @@ export function CheckInScreen() {
             {items.length <= 1 ? (
               <EmptyState
                 icon={<IconSparkle size={26} />}
-                title="I couldn't pick out anything specific"
-                body="Try mentioning pain, bleeding, energy, mood, sleep or a symptom — or log it directly."
+                title={t("checkin.noneTitle")}
+                body={t("checkin.noneBody")}
                 action={
                   <Button variant="secondary" onClick={() => setPhase("input")}>
-                    Edit my words
+                    {t("checkin.editWords")}
                   </Button>
                 }
               />
             ) : (
               <>
                 <div>
-                  <h2 className="font-display text-lg text-ink">
-                    I found a few things you may want to save
-                  </h2>
-                  <p className="mt-1 text-sm text-muted">
-                    Confirm, adjust or remove each one. Nothing is saved until you
-                    tap save.
-                  </p>
+                  <h2 className="font-display text-lg text-ink">{t("checkin.foundTitle")}</h2>
+                  <p className="mt-1 text-sm text-muted">{t("checkin.foundBody")}</p>
                 </div>
 
                 <div className="space-y-2.5">
@@ -185,7 +225,7 @@ export function CheckInScreen() {
                 )}
 
                 <p className="text-xs text-faint">
-                  Interpreted by: {result.modelLabel}
+                  {t("checkin.interpretedBy", { model: MODEL_LABEL[t.lang] ?? result.modelLabel })}
                 </p>
 
                 <div className="sticky bottom-2 space-y-2">
@@ -196,7 +236,7 @@ export function CheckInScreen() {
                     onClick={save}
                     disabled={unresolved || !items.some((i) => i.accepted)}
                   >
-                    {unresolved ? "Set pain strength to continue" : "Save to today's history"}
+                    {unresolved ? t("checkin.setSeverity") : t("checkin.saveCta")}
                   </Button>
                 </div>
               </>
@@ -209,15 +249,13 @@ export function CheckInScreen() {
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-normal-soft text-normal">
               <IconCheck size={30} />
             </span>
-            <h2 className="font-display text-xl text-ink">Saved to today's history</h2>
-            <p className="max-w-xs text-sm text-muted">
-              You can review or edit everything in today's log.
-            </p>
+            <h2 className="font-display text-xl text-ink">{t("checkin.savedTitle")}</h2>
+            <p className="max-w-xs text-sm text-muted">{t("checkin.savedBody")}</p>
             <div className="flex gap-3">
               <Button variant="quiet" onClick={() => navigate("/log")}>
-                View today's log
+                {t("checkin.viewLog")}
               </Button>
-              <Button onClick={() => navigate("/today")}>Back to Today</Button>
+              <Button onClick={() => navigate("/today")}>{t("checkin.backToToday")}</Button>
             </div>
           </div>
         )}
@@ -235,28 +273,24 @@ function ItemCard({
   onToggle: () => void;
   onSeverity: (level: number) => void;
 }) {
+  const t = useT();
+  const { label, detail } = describeItem(t, item);
   return (
-    <Card
-      className={`border transition-colors ${
-        item.accepted ? "border-primary/40" : "border-line opacity-60"
-      }`}
-    >
+    <Card className={`border transition-colors ${item.accepted ? "border-primary/40" : "border-line opacity-60"}`}>
       <div className="flex items-start gap-3">
         <button
           onClick={onToggle}
           aria-pressed={item.accepted}
-          aria-label={item.accepted ? `Remove ${item.label}` : `Add ${item.label}`}
+          aria-label={label}
           className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-            item.accepted
-              ? "border-primary bg-primary text-white"
-              : "border-line text-transparent"
+            item.accepted ? "border-primary bg-primary text-white" : "border-line text-transparent"
           }`}
         >
           <IconCheck size={14} />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-medium text-ink">{item.label}</p>
-          {item.detail && <p className="mt-0.5 text-sm text-muted">{item.detail}</p>}
+          <p className="text-[15px] font-medium text-ink">{label}</p>
+          {detail && <p className="mt-0.5 text-sm text-muted">{detail}</p>}
           {item.sourcePhrase && (
             <p className="mt-1 text-xs italic text-faint">“…{item.sourcePhrase}…”</p>
           )}
@@ -264,7 +298,7 @@ function ItemCard({
           {item.field === "pain" && (
             <div className="mt-3">
               <p className="mb-1.5 text-xs font-semibold text-muted">
-                {item.needsSeverity ? "How strong is the pain? (0–10)" : "Pain strength"}
+                {item.needsSeverity ? t("checkin.painStrengthQ") : t("checkin.painStrength")}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {Array.from({ length: 11 }, (_, n) => {
@@ -274,9 +308,7 @@ function ItemCard({
                       key={n}
                       onClick={() => onSeverity(n)}
                       className={`h-9 w-9 rounded-lg text-sm font-semibold ${
-                        current === n
-                          ? "bg-primary text-white"
-                          : "bg-surface-2 text-ink"
+                        current === n ? "bg-primary text-white" : "bg-surface-2 text-ink"
                       }`}
                     >
                       {n}
@@ -287,11 +319,7 @@ function ItemCard({
             </div>
           )}
         </div>
-        <button
-          onClick={onToggle}
-          aria-label="Dismiss"
-          className="shrink-0 text-faint hover:text-ink"
-        >
+        <button onClick={onToggle} aria-label={t("common.close")} className="shrink-0 text-faint hover:text-ink">
           <IconX size={18} />
         </button>
       </div>
@@ -300,6 +328,7 @@ function ItemCard({
 }
 
 function NoteToggle({ item, onToggle }: { item: ExtractedItem; onToggle: () => void }) {
+  const t = useT();
   return (
     <label className="flex items-start gap-3 rounded-2xl bg-surface-2 p-3.5">
       <input
@@ -309,8 +338,8 @@ function NoteToggle({ item, onToggle }: { item: ExtractedItem; onToggle: () => v
         className="mt-0.5 h-5 w-5 accent-[rgb(var(--pm-primary))]"
       />
       <span className="text-sm text-ink">
-        {item.label}
-        <span className="mt-0.5 block text-xs text-muted">{item.detail}</span>
+        {t("checkin.noteToggle")}
+        <span className="mt-0.5 block text-xs text-muted">{t("checkin.noteToggleBody")}</span>
       </span>
     </label>
   );
