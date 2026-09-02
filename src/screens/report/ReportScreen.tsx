@@ -70,13 +70,10 @@ export function ReportScreen() {
 
   return (
     <>
-      <AppBar title={t("report.title")} />
+      <AppBar title={t("report.heading")} />
       <Screen>
         <Stack>
-          <div>
-            <h1 className="font-display text-2xl text-ink">{t("report.heading")}</h1>
-            <p className="mt-1 text-sm text-muted">{t("report.intro")}</p>
-          </div>
+          <p className="px-0.5 pt-1 text-[13px] leading-snug text-muted">{t("report.intro")}</p>
 
           <div>
             <SectionLabel>{t("report.timeRange")}</SectionLabel>
@@ -116,7 +113,7 @@ export function ReportScreen() {
             )}
           </div>
 
-          <Card className="grid grid-cols-3 gap-y-4 text-center">
+          <Card className="grid grid-cols-3 gap-y-3.5 text-center">
             <Metric label={t("report.cycles")} value={`${report.cycleSummary.recordedCycles}`} />
             <Metric
               label={t("report.avgLength")}
@@ -134,42 +131,44 @@ export function ReportScreen() {
             <Metric label={t("report.heavyDays")} value={`${report.bleeding.heavyDays}`} />
           </Card>
 
-          <Card inset>
-            <p className="pm-label mb-2">{t("report.changesToDiscuss")}</p>
-            <ul className="list-disc space-y-1.5 pl-4 text-sm text-ink">
-              {report.changesToDiscuss.map((x, i) => (
-                <li key={i}>{x}</li>
-              ))}
-            </ul>
-          </Card>
-
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" onClick={() => setPreview(true)}>
-              {t("report.previewReport")}
-            </Button>
-            <Button variant="secondary" onClick={() => saveReport(report)}>
-              {t("report.saveToReports")}
-            </Button>
+          <div>
+            <SectionLabel>{t("report.changesToDiscuss")}</SectionLabel>
+            <Card inset>
+              <ul className="list-disc space-y-1.5 pl-4 text-[13px] leading-snug text-ink">
+                {report.changesToDiscuss.map((x, i) => (
+                  <li key={i}>{x}</li>
+                ))}
+              </ul>
+            </Card>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              icon={gated ? <IconLock size={16} /> : <IconDownload size={18} />}
-              onClick={() => (gated ? navigate("/profile/subscription") : setPrinting(true))}
-            >
-              {t("report.downloadPdf")}
+          <Button block onClick={() => setPreview(true)}>
+            {t("report.previewReport")}
+          </Button>
+          <div className="grid grid-cols-3 gap-2">
+            <Button size="sm" variant="quiet" onClick={() => saveReport(report)}>
+              {t("report.save")}
             </Button>
             <Button
+              size="sm"
               variant="quiet"
-              icon={gated ? <IconLock size={16} /> : <IconShare size={18} />}
+              icon={gated ? <IconLock size={14} /> : <IconDownload size={15} />}
+              onClick={() => (gated ? navigate("/profile/subscription") : setPrinting(true))}
+            >
+              PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="quiet"
+              icon={gated ? <IconLock size={14} /> : <IconShare size={15} />}
               onClick={() => (gated ? navigate("/profile/subscription") : share())}
             >
               {t("report.share")}
             </Button>
           </div>
-          {gated && <p className="text-center text-xs text-muted">{t("report.premiumNote")}</p>}
+          {gated && <p className="text-center text-[11px] text-muted">{t("report.premiumNote")}</p>}
 
-          <p className="text-xs leading-relaxed text-faint">
+          <p className="text-[11px] leading-relaxed text-faint">
             {t("disclaimer.reportAttribution")} {t("disclaimer.reportDisclaimer")}
           </p>
         </Stack>
@@ -230,8 +229,8 @@ export function ReportScreen() {
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="font-display text-xl text-ink">{value}</p>
-      <p className="mt-0.5 text-xs text-muted">{label}</p>
+      <p className="font-display text-[17px] text-ink">{value}</p>
+      <p className="mt-0.5 text-[11px] text-muted">{label}</p>
     </div>
   );
 }

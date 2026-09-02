@@ -32,15 +32,15 @@ export function Slider({
   return (
     <div>
       <div className="flex items-baseline justify-between">
-        <label htmlFor={id} className="text-[15px] font-medium text-ink">
+        <label htmlFor={id} className="text-[13px] font-medium text-ink">
           {label}
         </label>
-        <span className="font-display text-lg text-primary">{format(value)}</span>
+        <span className="font-display text-[15px] text-primary">{format(value)}</span>
       </div>
       <input
         id={id}
         type="range"
-        className="pm-range mt-3"
+        className="pm-range mt-2"
         min={min}
         max={max}
         step={step}
@@ -50,12 +50,12 @@ export function Slider({
         aria-valuetext={format(value)}
       />
       {ends && (
-        <div className="mt-1.5 flex justify-between text-xs text-faint">
+        <div className="mt-1 flex justify-between text-[11px] text-faint">
           <span>{ends[0]}</span>
           <span>{ends[1]}</span>
         </div>
       )}
-      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+      {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
     </div>
   );
 }

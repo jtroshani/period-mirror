@@ -36,7 +36,8 @@ export function CycleRing({
 }: CycleRingProps) {
   const cx = size / 2;
   const cy = size / 2;
-  const r = (size - 22) / 2;
+  const stroke = Math.round(size * 0.055);
+  const r = (size - stroke * 2 - 4) / 2;
   const perDay = 360 / Math.max(cycleLength, 1);
   const clampedDay = Math.max(1, Math.min(cycleDay, cycleLength));
   const dayAngle = (clampedDay - 1) * perDay;
@@ -45,13 +46,13 @@ export function CycleRing({
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} role="img" aria-label={`${centerTop}${centerBottom ? ", " + centerBottom : ""}`}>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgb(var(--pm-line))" strokeWidth={12} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgb(var(--pm-line))" strokeWidth={stroke} />
         {/* menstrual arc — recorded */}
         <path
           d={arcPath(cx, cy, r, 0, Math.max(perDay, periodLength * perDay))}
           fill="none"
           stroke="rgb(var(--pm-primary))"
-          strokeWidth={12}
+          strokeWidth={stroke}
           strokeLinecap="round"
         />
         {/* fertile window — predicted, lighter + dashed */}
@@ -66,18 +67,18 @@ export function CycleRing({
             )}
             fill="none"
             stroke="rgb(var(--pm-accent))"
-            strokeWidth={12}
+            strokeWidth={stroke}
             strokeLinecap="round"
             strokeDasharray="2 6"
             opacity={0.7}
           />
         )}
         {/* current-day marker */}
-        <circle cx={dotX} cy={dotY} r={9} fill="rgb(var(--pm-surface))" stroke="rgb(var(--pm-primary))" strokeWidth={3} />
+        <circle cx={dotX} cy={dotY} r={stroke * 0.7} fill="rgb(var(--pm-surface))" stroke="rgb(var(--pm-primary))" strokeWidth={3} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-display text-[28px] leading-none text-ink">{centerTop}</span>
-        {centerBottom && <span className="mt-1 text-xs text-muted">{centerBottom}</span>}
+        <span className="font-display text-[26px] leading-none text-ink">{centerTop}</span>
+        {centerBottom && <span className="mt-1 text-[11px] text-muted">{centerBottom}</span>}
       </div>
     </div>
   );

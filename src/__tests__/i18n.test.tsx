@@ -61,8 +61,10 @@ describe("Italian UI", () => {
   it("translates the Mirror screen incl. engine copy", async () => {
     const text = await mount("/mirror");
     expect(text).toContain("Il tuo andamento abituale");
-    expect(text).toMatch(/Diverso dal tuo solito/);
+    expect(text).toContain("Questo ciclo vs. la tua normalità");
+    // localised comparison summary + localised trend, both from i18n/copy.ts
     expect(text).toMatch(/dolore che hai registrato nei primi giorni/i);
+    expect(text).toMatch(/è aumentata gradualmente/);
   });
 
   it("translates the Report screen + document", async () => {

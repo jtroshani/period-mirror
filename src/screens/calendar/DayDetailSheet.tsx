@@ -70,9 +70,9 @@ export function DayDetailSheet({ date, entry, predictedPeriod, onClose }: Props)
         {rows.length > 0 ? (
           <dl className="divide-y divide-line">
             {rows.map((r) => (
-              <div key={r.k} className="flex gap-4 py-2.5 text-sm first:pt-0">
-                <dt className="w-24 shrink-0 text-muted">{r.k}</dt>
-                <dd className="text-ink">{r.v}</dd>
+              <div key={r.k} className="flex gap-3 py-2 text-[13px] first:pt-0">
+                <dt className="w-[92px] shrink-0 leading-tight text-muted">{r.k}</dt>
+                <dd className="min-w-0 flex-1 text-ink">{r.v}</dd>
               </div>
             ))}
           </dl>
@@ -87,9 +87,9 @@ export function DayDetailSheet({ date, entry, predictedPeriod, onClose }: Props)
             <p className="pm-label mb-1.5">{t("calendar.fromDevices")}</p>
             <dl className="divide-y divide-line">
               {vitalRows.map((v) => (
-                <div key={v.id} className="flex gap-4 py-2 text-sm first:pt-0">
-                  <dt className="w-24 shrink-0 text-muted">{t.enum("vital", v.type)}</dt>
-                  <dd className="text-ink">
+                <div key={v.id} className="flex gap-3 py-2 text-[13px] first:pt-0">
+                  <dt className="w-[92px] shrink-0 leading-tight text-muted">{t.enum("vital", v.type)}</dt>
+                  <dd className="min-w-0 flex-1 text-ink">
                     {v.value} {v.unit}
                   </dd>
                 </div>

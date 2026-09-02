@@ -5,7 +5,7 @@ import { Card, IconButton } from "@/components/ui/primitives";
 import { IconChevronLeft, IconChevronRight } from "@/components/ui/icons";
 import { DayDetailSheet } from "./DayDetailSheet";
 import { useAppStore } from "@/store/useAppStore";
-import { useCycles, useEntries, useUser } from "@/store/selectors";
+import { useCycles, useCyclePosition, useEntries, useUser } from "@/store/selectors";
 import { useFmt, useT } from "@/i18n";
 import { dowLetters } from "@/i18n/format";
 import {
@@ -64,27 +64,28 @@ export function CalendarScreen() {
   const weeks = useMemo(() => buildGrid(cursor, weekStartsOn), [cursor, weekStartsOn]);
   const monthIndex = fromIso(cursor).getMonth();
   const orderedDow = dowLetters(t.lang, weekStartsOn);
+  const position = useCyclePosition();
 
   return (
     <>
       <AppBar title={t("calendar.title")} />
       <Screen>
-        <div className="mb-3 mt-1 flex items-center justify-between">
-          <h2 className="font-display text-xl text-ink">{fmt.monthYear(cursor)}</h2>
-          <div className="flex gap-1">
-            <IconButton label={t("common.back")} onClick={() => setCursor(addMonths(cursor, -1))}>
-              <IconChevronLeft />
+        <div className="mb-2 mt-1 flex items-center justify-between">
+          <h2 className="font-display text-lg text-ink">{fmt.monthYear(cursor)}</h2>
+          <div className="flex gap-0.5">
+            <IconButton label={t("common.back")} className="h-9 w-9" onClick={() => setCursor(addMonths(cursor, -1))}>
+              <IconChevronLeft size={20} />
             </IconButton>
-            <IconButton label={t("common.continue")} onClick={() => setCursor(addMonths(cursor, 1))}>
-              <IconChevronRight />
+            <IconButton label={t("common.continue")} className="h-9 w-9" onClick={() => setCursor(addMonths(cursor, 1))}>
+              <IconChevronRight size={20} />
             </IconButton>
           </div>
         </div>
 
-        <Card padded={false} className="overflow-hidden p-3">
+        <Card padded={false} className="overflow-hidden p-2">
           <div className="grid grid-cols-7 text-center">
             {orderedDow.map((d, i) => (
-              <span key={i} className="pb-2 text-xs font-semibold text-faint">
+              <span key={i} className="pb-1.5 text-[11px] font-semibold text-faint">
                 {d}
               </span>
             ))}
@@ -102,12 +103,12 @@ export function CalendarScreen() {
                 <button
                   key={date}
                   onClick={() => setSelected(date)}
-                  className={`relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm ${
-                    inMonth ? "text-ink" : "text-faint/50"
+                  className={`relative flex h-[42px] flex-col items-center justify-center rounded-lg text-[13px] ${
+                    inMonth ? "text-ink" : "text-faint/40"
                   } ${isToday ? "ring-1 ring-primary" : ""} pm-pressable`}
                 >
                   <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                    className={`flex h-[26px] w-[26px] items-center justify-center rounded-full ${
                       isPeriod
                         ? "bg-primary font-semibold text-white"
                         : isPredicted
@@ -117,25 +118,42 @@ export function CalendarScreen() {
                   >
                     {fromIso(date).getDate()}
                   </span>
-                  <span className="mt-0.5 flex h-1.5 items-center gap-0.5">
-                    {hasPain && <span className="h-1.5 w-1.5 rounded-full bg-notice" />}
-                    {hasSymptoms && <span className="h-1.5 w-1.5 rounded-full bg-info" />}
+                  <span className="mt-0.5 flex h-1 items-center gap-0.5">
+                    {hasPain && <span className="h-1 w-1 rounded-full bg-notice" />}
+                    {hasSymptoms && <span className="h-1 w-1 rounded-full bg-info" />}
                   </span>
-                  {isFertile && <span className="absolute bottom-1 h-0.5 w-4 rounded-full bg-accent/70" />}
+                  {isFertile && <span className="absolute bottom-0.5 h-0.5 w-3.5 rounded-full bg-accent/70" />}
                 </button>
               );
             })}
           </div>
         </Card>
 
-        <Card className="mt-4">
-          <p className="pm-label mb-2">{t("calendar.legend")}</p>
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-muted">
+        {position && (
+          <Card className="mt-2.5 flex items-center justify-between px-3.5 py-3 text-[13px]">
+            <span className="text-ink">
+              {position.isPeriod && position.periodDay
+                ? t("today.periodDay", { n: position.periodDay })
+                : t("today.cycleDay", { n: position.cycleDay })}
+              {position.isPeriod ? ` · ${t("today.ofYourPeriod")}` : ` · ${t.enum("phase", position.phase)}`}
+            </span>
+            {position.predictedNextPeriodStart && (
+              <span className="text-muted">
+                {t("calendar.nextPeriod")}{" "}
+                <span className="font-semibold text-ink">{fmt.mediumDate(position.predictedNextPeriodStart)}</span>
+              </span>
+            )}
+          </Card>
+        )}
+
+        <Card className="mt-2.5">
+          <p className="mb-2 text-[12px] font-semibold text-muted">{t("calendar.legend")}</p>
+          <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] text-muted">
             <li className="flex items-center gap-2">
-              <span className="h-4 w-4 rounded-full bg-primary" /> {t("calendar.legRecorded")}
+              <span className="h-3 w-3 shrink-0 rounded-full bg-primary" /> {t("calendar.legRecorded")}
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-4 w-4 rounded-full border border-dashed border-primary" />{" "}
+              <span className="h-3 w-3 shrink-0 rounded-full border border-dashed border-primary" />{" "}
               {t("calendar.legPredicted")}
             </li>
             <li className="flex items-center gap-2">
@@ -150,7 +168,7 @@ export function CalendarScreen() {
               </li>
             )}
           </ul>
-          <p className="mt-3 text-xs text-faint">{t("calendar.predictedNote")}</p>
+          <p className="mt-2.5 text-[11px] leading-snug text-faint">{t("calendar.predictedNote")}</p>
         </Card>
       </Screen>
 

@@ -140,31 +140,31 @@ export function CheckInScreen() {
       <Screen>
         {phase === "input" && (
           <Stack>
-            <p className="text-[15px] leading-relaxed text-muted">{t("checkin.intro")}</p>
+            <p className="pt-1 text-[13px] leading-snug text-muted">{t("checkin.intro")}</p>
             <textarea
               autoFocus
               value={text}
               onChange={(e) => setText(e.target.value)}
-              rows={6}
+              rows={5}
               placeholder={t("checkin.placeholder")}
-              className="w-full rounded-card border border-line bg-surface p-4 text-[15px] leading-relaxed text-ink placeholder:text-faint"
+              className="w-full rounded-card border border-line bg-surface p-3.5 text-[14px] leading-relaxed text-ink placeholder:text-faint"
             />
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {examples.map((ex) => (
-                <Chip key={ex} onClick={() => setText(ex)}>
+                <Chip key={ex} size="sm" onClick={() => setText(ex)}>
                   {ex}
                 </Chip>
               ))}
             </div>
 
-            <Card inset className="flex items-start gap-2 text-xs leading-relaxed text-muted">
-              <IconInfo size={15} className="mt-0.5 shrink-0" />
+            <Card inset className="flex items-start gap-2 text-[11px] leading-snug text-muted">
+              <IconInfo size={13} className="mt-0.5 shrink-0" />
               <span>
                 {t("checkin.aiNote")} {aiConsent ? "" : t("checkin.aiOffNote")}
               </span>
             </Card>
 
-            <Button block size="lg" icon={<IconSparkle size={18} />} onClick={run} disabled={text.trim().length < 3}>
+            <Button block size="lg" icon={<IconSparkle size={17} />} onClick={run} disabled={text.trim().length < 3}>
               {t("checkin.readCta")}
             </Button>
           </Stack>

@@ -4,18 +4,12 @@ import { AppBar } from "@/components/ui/AppBar";
 import { Screen, Stack } from "@/components/layout/Screen";
 import { Card, SectionLabel, Badge } from "@/components/ui/primitives";
 import { Chip } from "@/components/ui/Chips";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Slider } from "@/components/ui/Slider";
 import { CycleRing } from "@/components/charts/CycleRing";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { SafetyBanner } from "@/components/ui/SafetyBanner";
-import {
-  IconSparkle,
-  IconArrowRight,
-  IconDrop,
-  IconClock,
-  IconLeaf,
-  IconHeart,
-} from "@/components/ui/icons";
+import { IconSparkle, IconArrowRight, IconClock, IconHeart } from "@/components/ui/icons";
 import { useAppStore } from "@/store/useAppStore";
 import {
   useBaseline,
@@ -76,28 +70,28 @@ export function TodayScreen() {
 
   return (
     <>
-      <AppBar greeting={greeting} title={fmt.longDate(today)} />
+      <AppBar greeting={greeting} greetingSub={fmt.longDate(today)} />
       <Screen>
         <Stack>
           {safety && <SafetyBanner notice={safety} />}
 
-          <Card className="flex flex-col items-center gap-3 pt-6">
+          {/* Current cycle */}
+          <Card className="flex flex-col items-center gap-1 py-3">
             <CycleRing
+              size={168}
               cycleLength={Math.round(
                 position?.cycle.lengthDays ?? user?.typicalCycleLengthDays ?? 28,
               )}
               cycleDay={position?.cycleDay ?? 1}
               periodLength={position?.cycle.periodLengthDays ?? 5}
               fertileWindow={
-                showFertile && position?.predictedFertileWindow
-                  ? { startDay: 10, endDay: 16 }
-                  : null
+                showFertile && position?.predictedFertileWindow ? { startDay: 10, endDay: 16 } : null
               }
               centerTop={centerTop}
               centerBottom={centerBottom}
             />
             {position?.daysUntilNextPeriod != null && (
-              <p className="text-sm text-muted">
+              <p className="text-[12px] text-muted">
                 {position.daysUntilNextPeriod > 0 ? (
                   <>
                     {t("today.nextPeriodIn")}{" "}
@@ -113,57 +107,53 @@ export function TodayScreen() {
             )}
           </Card>
 
-          <Card className="bg-primary text-white">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 rounded-full bg-white/15 p-2">
-                <IconHeart size={20} />
-              </span>
-              <div className="flex-1">
-                <h2 className="font-display text-lg">{t("today.checkInTitle")}</h2>
-                <p className="mt-1 text-sm text-white/80">{t("today.checkInBody")}</p>
-                <button
-                  onClick={() => navigate("/checkin")}
-                  className="pm-pressable mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary"
-                >
-                  {t("today.checkInCta")}
-                  <IconArrowRight size={18} />
-                </button>
-              </div>
-            </div>
-          </Card>
+          {/* Check-in */}
+          <button
+            onClick={() => navigate("/checkin")}
+            className="pm-pressable flex items-center gap-3 rounded-card bg-primary px-3.5 py-3 text-left text-white"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/15">
+              <IconHeart size={18} />
+            </span>
+            <span className="flex-1 text-[15px] font-semibold">{t("today.checkInCta")}</span>
+            <IconArrowRight size={18} className="shrink-0 text-white/80" />
+          </button>
 
+          {/* Quick log */}
           <div>
             <SectionLabel
               action={
-                <button className="text-sm font-medium text-primary" onClick={() => navigate("/log")}>
+                <button className="text-[13px] font-medium text-primary" onClick={() => navigate("/log")}>
                   {t("today.openFullLog")}
                 </button>
               }
             >
               {t("today.quickLog")}
             </SectionLabel>
-            <Card padded className="space-y-4">
-              <QuickBlock icon={<IconDrop size={16} />} title={t("today.qlBleeding")}>
-                <div className="flex flex-wrap gap-2">
-                  {BLEEDING_OPTIONS.map((o) => (
-                    <Chip
-                      key={o.value}
-                      selected={entry?.bleeding?.level === o.value}
-                      onClick={() => upsertEntry(today, { bleeding: { level: o.value as BleedingLevel } })}
-                    >
-                      {t.enum("bleeding", o.value)}
-                    </Chip>
-                  ))}
-                </div>
-              </QuickBlock>
+            <Card className="space-y-3.5">
+              <div>
+                <p className="mb-1.5 text-[12px] font-semibold text-muted">{t("today.qlBleeding")}</p>
+                <SegmentedControl<BleedingLevel | "">
+                  size="sm"
+                  label={t("today.qlBleeding")}
+                  value={(entry?.bleeding?.level as BleedingLevel) ?? ""}
+                  onChange={(v) => v && upsertEntry(today, { bleeding: { level: v as BleedingLevel } })}
+                  options={BLEEDING_OPTIONS.filter((o) => o.value !== "spotting").map((o) => ({
+                    value: o.value,
+                    label: t.enum("bleeding", o.value),
+                  }))}
+                />
+              </div>
 
-              <QuickBlock icon={<IconHeart size={16} />} title={t("today.qlMood")}>
-                <div className="flex flex-wrap gap-2">
+              <div>
+                <p className="mb-1.5 text-[12px] font-semibold text-muted">{t("today.qlMood")}</p>
+                <div className="flex flex-wrap gap-1.5">
                   {MOOD_OPTIONS.map((o) => {
                     const on = selectedMoods.includes(o.value);
                     return (
                       <Chip
                         key={o.value}
+                        size="sm"
                         selected={on}
                         onClick={() =>
                           upsertEntry(today, {
@@ -180,9 +170,10 @@ export function TodayScreen() {
                     );
                   })}
                 </div>
-              </QuickBlock>
+              </div>
 
-              <QuickBlock icon={<IconLeaf size={16} />} title={t("today.qlEnergy")}>
+              <div>
+                <p className="mb-1 text-[12px] font-semibold text-muted">{t("today.qlEnergy")}</p>
                 <Slider
                   label={t("today.qlEnergyQ")}
                   min={1}
@@ -192,9 +183,9 @@ export function TodayScreen() {
                   format={(v) => t.energy(v)}
                   onChange={(v) => upsertEntry(today, { energy: { level: v as 1 | 2 | 3 | 4 | 5 } })}
                 />
-              </QuickBlock>
+              </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-1">
+              <div className="grid grid-cols-3 gap-2">
                 <MiniLink label={t("today.qlPain")} onClick={() => navigate("/log#pain")} />
                 <MiniLink label={t("today.qlSleep")} onClick={() => navigate("/log#sleep")} />
                 <MiniLink label={t("today.qlSymptoms")} onClick={() => navigate("/log#symptoms")} />
@@ -202,39 +193,39 @@ export function TodayScreen() {
             </Card>
           </div>
 
+          {/* Today's mirror */}
           <div>
             <SectionLabel>{t("today.mirrorSection")}</SectionLabel>
             <Card
-              className="pm-pressable text-left"
+              className="pm-pressable flex items-start gap-3 text-left"
               as="article"
               onClick={() => navigate("/mirror")}
               role="button"
             >
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 rounded-full bg-primary-soft p-2 text-primary">
-                  {mirrorLine ? <IconSparkle size={18} /> : <IconClock size={18} />}
-                </span>
-                <div className="flex-1">
-                  {mirrorLine ? (
-                    <>
-                      <p className="text-[15px] font-medium text-ink">{mirrorLine}</p>
-                      <p className="mt-1.5 text-sm text-primary">{t("today.openMirror")} →</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-[15px] font-medium text-ink">{t("today.learningLine")}</p>
-                      <p className="mt-1 text-sm text-muted">{t("today.learningBody")}</p>
-                    </>
-                  )}
-                </div>
+              <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
+                {mirrorLine ? <IconSparkle size={16} /> : <IconClock size={16} />}
+              </span>
+              <div className="min-w-0 flex-1">
+                {mirrorLine ? (
+                  <>
+                    <p className="text-[14px] leading-snug text-ink">{mirrorLine}</p>
+                    <p className="mt-1 text-[13px] font-medium text-primary">{t("today.openMirror")} →</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[14px] font-medium text-ink">{t("today.learningLine")}</p>
+                    <p className="mt-0.5 text-[13px] text-muted">{t("today.learningBody")}</p>
+                  </>
+                )}
               </div>
             </Card>
           </div>
 
+          {/* Today's history */}
           <div>
             <SectionLabel
               action={
-                <button className="text-sm font-medium text-primary" onClick={() => navigate("/log")}>
+                <button className="text-[13px] font-medium text-primary" onClick={() => navigate("/log")}>
                   {t("common.edit")}
                 </button>
               }
@@ -253,31 +244,11 @@ export function TodayScreen() {
   );
 }
 
-function QuickBlock({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-muted">
-        <span className="text-faint">{icon}</span>
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
 function MiniLink({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="pm-pressable rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-ink"
+      className="pm-pressable rounded-lg border border-line bg-surface py-2 text-[13px] font-medium text-ink"
     >
       + {label}
     </button>
@@ -288,7 +259,7 @@ function TodaySummary({ entry }: { entry: ReturnType<typeof useTodayEntry> }) {
   const t = useT();
   const fmt = useFmt();
   if (!entry) {
-    return <p className="text-sm text-muted">{t("today.historyEmpty")}</p>;
+    return <p className="text-[13px] text-muted">{t("today.historyEmpty")}</p>;
   }
   const rows: { k: string; v: string }[] = [];
   if (entry.bleeding) rows.push({ k: t("today.rowBleeding"), v: t.enum("bleeding", entry.bleeding.level) });
@@ -312,13 +283,13 @@ function TodaySummary({ entry }: { entry: ReturnType<typeof useTodayEntry> }) {
     });
   if (entry.notes) rows.push({ k: t("today.rowNote"), v: entry.notes });
 
-  if (rows.length === 0) return <p className="text-sm text-muted">{t("today.historyEmpty")}</p>;
+  if (rows.length === 0) return <p className="text-[13px] text-muted">{t("today.historyEmpty")}</p>;
   return (
-    <dl className="divide-y divide-line">
+    <dl className="divide-y divide-line/70">
       {rows.map((r) => (
-        <div key={r.k} className="flex gap-4 py-2 text-sm first:pt-0 last:pb-0">
-          <dt className="w-24 shrink-0 text-muted">{r.k}</dt>
-          <dd className="text-ink">{r.v}</dd>
+        <div key={r.k} className="flex gap-3 py-1.5 text-[13px] first:pt-0 last:pb-0">
+          <dt className="w-[88px] shrink-0 leading-tight text-muted">{r.k}</dt>
+          <dd className="min-w-0 flex-1 text-ink">{r.v}</dd>
         </div>
       ))}
     </dl>

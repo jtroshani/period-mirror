@@ -61,12 +61,12 @@ export function ProfileScreen() {
       <AppBar title={t("profile.title")} />
       <Screen>
         <Stack>
-          <Card className="flex items-center gap-4">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-soft font-display text-xl text-primary">
+          <Card className="flex items-center gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary-soft font-display text-[17px] text-primary">
               {initials}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-display text-lg text-ink">
+              <p className="truncate font-display text-[17px] text-ink">
                 {user?.displayName ?? t("profile.yourProfile")}
               </p>
               <div className="mt-1 flex flex-wrap gap-1.5">

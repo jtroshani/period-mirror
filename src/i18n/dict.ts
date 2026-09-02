@@ -203,6 +203,7 @@ export const en = {
 
   calendar: {
     title: "Calendar",
+    nextPeriod: "Next period",
     legend: "Legend",
     legRecorded: "Recorded period",
     legPredicted: "Predicted period",
@@ -281,8 +282,8 @@ export const en = {
   report: {
     title: "Report",
     heading: "My Health Report",
-    intro:
-      "A one-page summary you can bring to an appointment — built from what you've recorded, compared with your own history.",
+    intro: "A one-page summary for an appointment — from what you've recorded, compared with your own history.",
+    save: "Save",
     timeRange: "Time range",
     r3m: "3 mo",
     r6m: "6 mo",
@@ -731,6 +732,7 @@ export const it: DeepPartial<typeof en> = {
 
   calendar: {
     title: "Calendario",
+    nextPeriod: "Prossime mestruazioni",
     legend: "Legenda",
     legRecorded: "Mestruazioni registrate",
     legPredicted: "Mestruazioni previste",
@@ -809,8 +811,8 @@ export const it: DeepPartial<typeof en> = {
   report: {
     title: "Referto",
     heading: "Il mio Referto di Salute",
-    intro:
-      "Un riepilogo di una pagina da portare a una visita — costruito da ciò che hai registrato, confrontato con il tuo storico.",
+    intro: "Un riepilogo di una pagina per una visita — da ciò che hai registrato, confrontato con il tuo storico.",
+    save: "Salva",
     timeRange: "Intervallo di tempo",
     r3m: "3 mesi",
     r6m: "6 mesi",

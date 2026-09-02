@@ -13,7 +13,7 @@ export function Screen({
   return (
     <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar">
       <div
-        className={`mx-auto w-full max-w-app ${pad ? "px-4 pb-10 pt-1" : ""} ${className}`}
+        className={`mx-auto w-full max-w-app ${pad ? "px-4 pb-28 pt-0.5" : ""} ${className}`}
       >
         {children}
       </div>
@@ -24,7 +24,7 @@ export function Screen({
 /** Vertical rhythm helper for stacks of cards / sections. */
 export function Stack({
   children,
-  gap = "gap-4",
+  gap = "gap-3",
   className = "",
 }: {
   children: ReactNode;

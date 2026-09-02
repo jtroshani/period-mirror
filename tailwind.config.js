@@ -47,11 +47,12 @@ export default {
         ],
       },
       borderRadius: {
-        card: "1.25rem",
-        sheet: "1.75rem",
+        card: "1rem",
+        sheet: "1.5rem",
       },
       boxShadow: {
-        card: "0 1px 2px rgb(28 25 23 / 0.04), 0 8px 24px -12px rgb(28 25 23 / 0.10)",
+        card: "0 1px 2px rgb(28 25 23 / 0.04)",
+        pop: "0 4px 16px -6px rgb(28 25 23 / 0.14)",
         sheet: "0 -8px 40px -12px rgb(28 25 23 / 0.22)",
         nav: "0 -1px 0 rgb(28 25 23 / 0.06)",
       },

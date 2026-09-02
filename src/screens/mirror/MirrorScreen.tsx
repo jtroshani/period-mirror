@@ -2,13 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBar } from "@/components/ui/AppBar";
 import { Screen, Stack } from "@/components/layout/Screen";
-import { Card, SectionLabel, Badge, Button, StatValue } from "@/components/ui/primitives";
+import { Card, SectionLabel, Button } from "@/components/ui/primitives";
 import { ProgressRing } from "@/components/ui/ProgressRing";
-import { ComparisonBar } from "@/components/charts/ComparisonBar";
 import { MiniBars } from "@/components/charts/MiniBars";
 import { Sheet } from "@/components/ui/Sheet";
 import { Disclaimer } from "@/components/ui/Disclaimer";
-import { IconLock, IconArrowRight, IconInfo } from "@/components/ui/icons";
+import { IconLock, IconInfo, IconChevronRight } from "@/components/ui/icons";
 import { useBaseline, useComparisons, useIsPremium } from "@/store/selectors";
 import { useFmt, useT, type TFn } from "@/i18n";
 import {
@@ -45,11 +44,18 @@ export function MirrorScreen() {
   const ready = readiness.level === "ready" || readiness.level === "improving";
 
   const usable = comparisons.filter((c) => c.confidence !== "insufficient");
-  const hero = usable.find((c) => c.metric === "early_period_pain" && c.severity !== "none");
-  const noticeCmps = usable.filter((c) => comparisonCategory(c) === "NOTICE");
+  const notices = usable.filter((c) => comparisonCategory(c) === "NOTICE");
+  const topNotice =
+    usable.find((c) => c.metric === "early_period_pain" && c.severity !== "none") ?? notices[0];
+
+  const valueOf = (c: MetricComparison, v: number | null) => {
+    if (v == null) return "—";
+    if (c.metric === "period_sleep") return fmt.hours(v);
+    return `${round(v, c.metric === "cycle_length" || c.metric === "heavy_days" ? 0 : 1)}${c.unit ?? ""}`;
+  };
 
   const whyFromCmp = (c: MetricComparison): Why => ({
-    title: t("mirror.whyTitle"),
+    title: cmpMetricLabel(t, c.metric),
     body: comparisonExplanation(t.lang, c),
     rows: cmpRows(t, fmt, c),
     guidance: comparisonGuidance(t.lang, c),
@@ -57,11 +63,7 @@ export function MirrorScreen() {
   const whyFromTrend = (tr: BaselineTrend): Why => ({
     title: trendTitle(t.lang, tr),
     body: trendDetail(t.lang, tr),
-    rows: [
-      { label: t("mirror.evConfidence"), value: t(`mirror.${tr.direction === "increasing" ? "badgeHigher" : "badgeLower"}`) },
-      { label: t("common.day"), value: `${tr.changePerCycle}` },
-      { label: "Window", value: `${tr.windowCycles}` },
-    ],
+    rows: [{ label: t("mirror.evBasedOn"), value: `${tr.windowCycles} ${t("common.days")}` }],
     guidance: trendGuidance(t.lang, tr),
   });
 
@@ -70,227 +72,192 @@ export function MirrorScreen() {
       <AppBar title={t("mirror.title")} />
       <Screen>
         <Stack>
-          <Card className="flex items-center gap-4">
+          {/* Readiness */}
+          <Card className="flex items-center gap-3.5">
             <ProgressRing
               progress={readiness.progress}
-              size={92}
-              stroke={8}
+              size={64}
+              stroke={6}
               label={`${readiness.cyclesHave}/${readiness.cyclesNeeded}`}
             />
-            <div className="flex-1">
-              <p className="font-display text-lg text-ink">
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-semibold text-ink">
                 {ready ? t("mirror.readyTitle") : t("mirror.learningTitle")}
               </p>
-              <p className="mt-1 text-sm text-muted">{readinessMessage(t.lang, readiness)}</p>
+              <p className="mt-0.5 text-[12px] leading-snug text-muted">
+                {readinessMessage(t.lang, readiness)}
+              </p>
             </div>
           </Card>
 
+          {/* Usual pattern */}
           <div>
             <SectionLabel>{t("mirror.usualPattern")}</SectionLabel>
-            <Card className="grid grid-cols-2 gap-y-5">
-              <UsualStat
-                label={t("mirror.avgCycle")}
+            <Card className="grid grid-cols-2 gap-x-3 gap-y-3.5">
+              <Usual label={t("mirror.avgCycle")}
                 value={baseline.cycleLength.n ? t("onboarding.daysN", { n: round(baseline.cycleLength.mean, 0) }) : "—"}
-                sub={
-                  baseline.cycleLength.n
-                    ? t("mirror.typicalVariation", { n: round(baseline.cycleLength.sd || 1, 1) })
-                    : t("mirror.needs2Cycles")
-                }
+                sub={baseline.cycleLength.n ? t("mirror.typicalVariation", { n: round(baseline.cycleLength.sd || 1, 1) }) : t("mirror.needs2Cycles")}
               />
-              <UsualStat
-                label={t("mirror.typicalPeriod")}
+              <Usual label={t("mirror.typicalPeriod")}
                 value={baseline.periodDuration.n ? t("onboarding.daysN", { n: round(baseline.periodDuration.mean, 0) }) : "—"}
               />
-              <UsualStat
-                label={t("mirror.day13Pain")}
+              <Usual label={t("mirror.day13Pain")}
                 value={baseline.earlyPeriodPain.n ? `${round(baseline.earlyPeriodPain.mean, 1)} / 10` : "—"}
-                sub={
-                  baseline.earlyPeriodPain.n
-                    ? t("mirror.overNCycles", { n: baseline.earlyPeriodPain.n })
-                    : t("mirror.needsMoreData")
-                }
+                sub={baseline.earlyPeriodPain.n ? t("mirror.overNCycles", { n: baseline.earlyPeriodPain.n }) : t("mirror.needsMoreData")}
               />
-              <UsualStat
-                label={t("mirror.sleepDuringPeriod")}
+              <Usual label={t("mirror.sleepDuringPeriod")}
                 value={baseline.periodSleep.n ? fmt.hours(baseline.periodSleep.mean) : "—"}
               />
-              <UsualStat
-                label={t("mirror.typicalEnergy")}
+              <Usual label={t("mirror.typicalEnergy")}
                 value={baseline.energyOverall.n ? `${round(baseline.energyOverall.mean, 1)} / 5` : "—"}
               />
-              <UsualStat
-                label={t("mirror.heavyDaysPerPeriod")}
+              <Usual label={t("mirror.heavyDaysPerPeriod")}
                 value={baseline.heavyDaysPerCycle.n ? `${round(baseline.heavyDaysPerCycle.mean, 1)}` : "—"}
               />
             </Card>
 
             {Object.keys(baseline.painByCycleDay).length > 2 && (
-              <Card className="mt-3">
-                <p className="pm-label mb-3">{t("mirror.painAcrossPeriod")}</p>
+              <Card className="mt-2.5">
+                <p className="mb-2.5 text-[12px] font-semibold text-muted">{t("mirror.painAcrossPeriod")}</p>
                 <MiniBars
                   ariaLabel={t("mirror.painAcrossPeriod")}
                   unit={t("mirror.painChartUnit")}
-                  max={10}
-                  data={Array.from({ length: 7 }, (_, i) => {
-                    const day = i + 1;
-                    return {
-                      label: `${day}`,
-                      value: baseline.painByCycleDay[day] ?? 0,
-                      highlight: day <= 3,
-                    };
-                  })}
+                  height={80}
+                  data={Array.from({ length: 7 }, (_, i) => ({
+                    label: `${i + 1}`,
+                    value: baseline.painByCycleDay[i + 1] ?? 0,
+                    highlight: i < 3,
+                  }))}
                 />
               </Card>
             )}
           </div>
 
+          {/* This cycle vs usual — one consolidated list */}
           {!isPremium ? (
             <Card className="text-center">
-              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary-soft text-primary">
-                <IconLock size={20} />
+              <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary">
+                <IconLock size={18} />
               </span>
-              <p className="mt-3 font-display text-lg text-ink">{t("mirror.lockedTitle")}</p>
-              <p className="mx-auto mt-1 max-w-xs text-sm text-muted">{t("mirror.lockedBody")}</p>
-              <Button className="mt-4" onClick={() => navigate("/profile/subscription")}>
+              <p className="mt-2.5 text-[15px] font-semibold text-ink">{t("mirror.lockedTitle")}</p>
+              <p className="mx-auto mt-1 max-w-xs text-[13px] text-muted">{t("mirror.lockedBody")}</p>
+              <Button className="mt-3" size="sm" onClick={() => navigate("/profile/subscription")}>
                 {t("mirror.seePremium")}
               </Button>
             </Card>
           ) : (
-            <>
-              {hero && (
-                <div>
-                  <SectionLabel>{t("mirror.differentFromUsual")}</SectionLabel>
-                  <Card className="border border-notice/30">
-                    <p className="font-display text-lg text-ink">
-                      {t("today.qlPain")} — {t.enum("phase", "menstrual").toLowerCase()}
-                    </p>
-                    <p className="mt-1 text-sm text-muted">{t("mirror.heroPainBody")}</p>
-                    <div className="my-4 flex items-end gap-6">
-                      <StatValue
-                        value={`${round(hero.currentValue ?? 0, 1)}`}
-                        unit="/10"
-                        caption={t("mirror.thisCycle")}
-                        tone="primary"
-                      />
-                      <StatValue
-                        value={`${round(hero.baselineValue ?? 0, 1)}`}
-                        unit="/10"
-                        caption={t("mirror.yourUsual")}
-                        tone="muted"
-                      />
-                    </div>
-                    <ComparisonBar
-                      currentLabel={`${round(hero.currentValue ?? 0, 1)}/10`}
-                      usualLabel={`${round(hero.baselineValue ?? 0, 1)}/10`}
-                      current={hero.currentValue ?? 0}
-                      usual={hero.baselineValue ?? 0}
-                      scaleMax={10}
-                      severity={hero.severity}
-                    />
-                    <p className="mt-3 text-xs text-muted">
-                      {t("mirror.basedOnNCycles", { n: hero.basisCycles })}
-                    </p>
-                    <button
-                      className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
-                      onClick={() => setWhy(whyFromCmp(hero))}
-                    >
-                      {t("mirror.whyAmISeeing")}
-                      <IconArrowRight size={16} />
-                    </button>
-                  </Card>
-                </div>
-              )}
-
-              <div>
-                <SectionLabel>{t("mirror.thisCycleVsUsual")}</SectionLabel>
-                <Stack gap="gap-2.5">
-                  {usable.map((c) => (
-                    <ComparisonCard key={c.id} cmp={c} onWhy={() => setWhy(whyFromCmp(c))} />
-                  ))}
-                  {usable.length === 0 && (
-                    <Card>
-                      <p className="text-sm text-muted">{t("mirror.notEnoughYet")}</p>
-                    </Card>
-                  )}
-                </Stack>
-              </div>
-
-              <div>
-                <SectionLabel>{t("mirror.changesWorthNoticing")}</SectionLabel>
-                <Stack gap="gap-2.5">
-                  {noticeCmps.map((c) => (
-                    <NoticeRow
-                      key={c.id}
-                      summary={comparisonSummary(t.lang, c)}
-                      badge={t("mirror.catDifferent")}
-                      guidance={comparisonGuidance(t.lang, c)}
-                      onWhy={() => setWhy(whyFromCmp(c))}
-                    />
-                  ))}
-                  {baseline.trends.map((tr) => (
-                    <NoticeRow
-                      key={tr.id}
-                      summary={trendSummary(t.lang, tr)}
-                      badge={t("mirror.catTrend")}
-                      guidance={trendGuidance(t.lang, tr)}
-                      onWhy={() => setWhy(whyFromTrend(tr))}
-                    />
-                  ))}
-                  {noticeCmps.length === 0 && baseline.trends.length === 0 && (
-                    <Card>
-                      <p className="text-sm text-muted">{t("mirror.nothingStandsOut")}</p>
-                    </Card>
-                  )}
-                </Stack>
-              </div>
-
-              {baseline.symptomFrequency.length > 0 && (
-                <div>
-                  <SectionLabel>{t("mirror.mostLoggedSymptoms")}</SectionLabel>
-                  <Card className="space-y-2.5">
-                    {baseline.symptomFrequency.slice(0, 5).map((s) => (
-                      <div key={s.type} className="flex items-center gap-3">
-                        <span className="w-32 shrink-0 text-sm text-ink">{t.enum("symptom", s.type)}</span>
-                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
-                          <div
-                            className="h-full rounded-full bg-primary/50"
-                            style={{ width: `${Math.min(100, (s.ratePerCycle / 5) * 100)}%` }}
-                          />
-                        </div>
-                        <span className="w-16 shrink-0 text-right text-xs text-muted">
-                          {t("mirror.perCycle", { n: s.ratePerCycle })}
-                        </span>
-                      </div>
-                    ))}
-                  </Card>
-                </div>
-              )}
-            </>
+            <div>
+              <SectionLabel>{t("mirror.thisCycleVsUsual")}</SectionLabel>
+              <Card padded={false} className="overflow-hidden">
+                {topNotice && (
+                  <div className="border-b border-line/70 bg-notice-soft/40 px-3.5 py-3">
+                    <p className="text-[13px] leading-snug text-ink">{comparisonSummary(t.lang, topNotice)}</p>
+                  </div>
+                )}
+                {usable.length === 0 ? (
+                  <p className="p-3.5 text-[13px] text-muted">{t("mirror.notEnoughYet")}</p>
+                ) : (
+                  <ul className="divide-y divide-line/70">
+                    {usable.map((c) => {
+                      const notice = comparisonCategory(c) === "NOTICE";
+                      return (
+                        <li key={c.id}>
+                          <button
+                            onClick={() => setWhy(whyFromCmp(c))}
+                            className="pm-pressable flex w-full items-center gap-3 px-3.5 py-3 text-left hover:bg-surface-2/50"
+                          >
+                            <span
+                              className={`h-2 w-2 shrink-0 rounded-full ${notice ? "bg-notice" : "bg-normal"}`}
+                            />
+                            <span className="min-w-0 flex-1 text-[14px] font-medium text-ink">
+                              {cmpMetricLabel(t, c.metric)}
+                            </span>
+                            <span className="shrink-0 text-right text-[13px]">
+                              <span className="font-semibold text-ink">{valueOf(c, c.currentValue)}</span>
+                              <span className="text-faint"> · {valueOf(c, c.baselineValue)}</span>
+                            </span>
+                            <IconChevronRight size={16} className="shrink-0 text-faint" />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </Card>
+            </div>
           )}
 
-          <Disclaimer variant="long" />
+          {/* Trends */}
+          {isPremium && baseline.trends.length > 0 && (
+            <div>
+              <SectionLabel>{t("mirror.catTrend")}</SectionLabel>
+              <Card padded={false} className="overflow-hidden">
+                <ul className="divide-y divide-line/70">
+                  {baseline.trends.map((tr) => (
+                    <li key={tr.id}>
+                      <button
+                        onClick={() => setWhy(whyFromTrend(tr))}
+                        className="pm-pressable flex w-full items-start gap-3 px-3.5 py-3 text-left hover:bg-surface-2/50"
+                      >
+                        <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-info" />
+                        <span className="min-w-0 flex-1 text-[13px] leading-snug text-ink">
+                          {trendSummary(t.lang, tr)}
+                        </span>
+                        <IconChevronRight size={16} className="mt-0.5 shrink-0 text-faint" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          )}
+
+          {/* Symptom frequency */}
+          {isPremium && baseline.symptomFrequency.length > 0 && (
+            <div>
+              <SectionLabel>{t("mirror.mostLoggedSymptoms")}</SectionLabel>
+              <Card className="space-y-2">
+                {baseline.symptomFrequency.slice(0, 4).map((s) => (
+                  <div key={s.type} className="flex items-center gap-2.5">
+                    <span className="w-28 shrink-0 truncate text-[13px] text-ink">{t.enum("symptom", s.type)}</span>
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+                      <div
+                        className="h-full rounded-full bg-primary/50"
+                        style={{ width: `${Math.min(100, (s.ratePerCycle / 5) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-14 shrink-0 text-right text-[11px] text-muted">
+                      {t("mirror.perCycle", { n: s.ratePerCycle })}
+                    </span>
+                  </div>
+                ))}
+              </Card>
+            </div>
+          )}
+
+          <Disclaimer />
         </Stack>
       </Screen>
 
       <Sheet open={!!why} onClose={() => setWhy(null)} title={t("mirror.whyTitle")} subtitle={why?.title}>
         {why && (
-          <div className="space-y-4">
-            <p className="text-[15px] leading-relaxed text-ink">{why.body}</p>
-            <dl className="divide-y divide-line rounded-2xl bg-surface-2 px-4">
+          <div className="space-y-3.5">
+            <p className="text-[14px] leading-relaxed text-ink">{why.body}</p>
+            <dl className="divide-y divide-line/70 rounded-xl bg-surface-2 px-3.5">
               {why.rows.map((r) => (
-                <div key={r.label} className="flex justify-between py-2.5 text-sm">
+                <div key={r.label} className="flex justify-between py-2.5 text-[13px]">
                   <dt className="text-muted">{r.label}</dt>
                   <dd className="font-medium text-ink">{r.value}</dd>
                 </div>
               ))}
             </dl>
             {why.guidance && (
-              <p className="flex items-start gap-2 rounded-2xl bg-notice-soft/60 p-3 text-sm text-ink">
-                <IconInfo size={16} className="mt-0.5 shrink-0 text-notice" />
+              <p className="flex items-start gap-2 rounded-xl bg-notice-soft/60 p-3 text-[13px] leading-snug text-ink">
+                <IconInfo size={15} className="mt-0.5 shrink-0 text-notice" />
                 {why.guidance}
               </p>
             )}
-            <p className="text-xs text-faint">{t("mirror.whyFootnote")}</p>
+            <p className="text-[11px] leading-snug text-faint">{t("mirror.whyFootnote")}</p>
           </div>
         )}
       </Sheet>
@@ -298,21 +265,17 @@ export function MirrorScreen() {
   );
 }
 
-function UsualStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function Usual({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="px-1">
-      <p className="pm-label mb-1">{label}</p>
-      <p className="font-display text-xl text-ink">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-faint">{sub}</p>}
+    <div className="min-h-[3.5rem]">
+      <p className="text-[11px] font-semibold text-faint">{label}</p>
+      <p className="mt-0.5 font-display text-[17px] text-ink">{value}</p>
+      <p className="mt-0.5 text-[11px] leading-tight text-faint">{sub ?? " "}</p>
     </div>
   );
 }
 
-function cmpRows(
-  t: TFn,
-  fmt: ReturnType<typeof useFmt>,
-  c: MetricComparison,
-): { label: string; value: string }[] {
+function cmpRows(t: TFn, fmt: ReturnType<typeof useFmt>, c: MetricComparison): { label: string; value: string }[] {
   const f = (v: number | null) => {
     if (v == null) return "—";
     if (c.metric === "period_sleep") return fmt.hours(v);
@@ -344,64 +307,6 @@ function cmpRows(
     ),
   });
   return rows;
-}
-
-function ComparisonCard({ cmp, onWhy }: { cmp: MetricComparison; onWhy: () => void }) {
-  const t = useT();
-  const fmt = useFmt();
-  const badge =
-    cmp.direction === "higher"
-      ? t("mirror.badgeHigher")
-      : cmp.direction === "lower"
-        ? t("mirror.badgeLower")
-        : t("mirror.badgeWithin");
-  const tone = cmp.severity === "none" ? "normal" : "notice";
-  const f = (v: number | null) =>
-    v == null ? "—" : cmp.metric === "period_sleep" ? fmt.hours(v) : `${round(v, 1)}${cmp.unit ?? ""}`;
-  return (
-    <Card>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[15px] font-medium text-ink">{cmpMetricLabel(t, cmp.metric)}</p>
-          <p className="mt-0.5 text-sm text-muted">
-            {f(cmp.currentValue)}{" "}
-            <span className="text-faint">· {t("mirror.yourUsual").toLowerCase()}</span>{" "}
-            {f(cmp.baselineValue)}
-          </p>
-        </div>
-        <Badge tone={tone}>{badge}</Badge>
-      </div>
-      <button className="mt-2 text-sm font-semibold text-primary" onClick={onWhy}>
-        {t("mirror.whyAmISeeing")}
-      </button>
-    </Card>
-  );
-}
-
-function NoticeRow({
-  summary,
-  badge,
-  guidance,
-  onWhy,
-}: {
-  summary: string;
-  badge: string;
-  guidance?: string;
-  onWhy: () => void;
-}) {
-  const t = useT();
-  return (
-    <Card>
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[15px] font-medium text-ink">{summary}</p>
-        <Badge tone="notice">{badge}</Badge>
-      </div>
-      {guidance && <p className="mt-2 text-sm text-muted">{guidance}</p>}
-      <button className="mt-2 text-sm font-semibold text-primary" onClick={onWhy}>
-        {t("mirror.seeWhy")}
-      </button>
-    </Card>
-  );
 }
 
 function cmpMetricLabel(t: TFn, metric: string): string {

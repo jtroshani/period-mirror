@@ -13,13 +13,12 @@ export function SegmentedControl<T extends string>({
   label,
   size = "md",
 }: SegmentedControlProps<T>) {
+  const sm = size === "sm";
   return (
     <div
       role="tablist"
       aria-label={label}
-      className={`inline-flex w-full rounded-xl bg-surface-2 p-1 ${
-        size === "sm" ? "text-xs" : "text-sm"
-      }`}
+      className={`inline-flex w-full rounded-xl bg-surface-2 p-0.5 ${sm ? "text-[11px]" : "text-[13px]"}`}
     >
       {options.map((o) => {
         const active = o.value === value;
@@ -29,9 +28,9 @@ export function SegmentedControl<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(o.value)}
-            className={`pm-pressable flex-1 rounded-lg px-3 py-2 font-semibold transition-colors ${
-              active ? "bg-surface text-ink shadow-card" : "text-muted hover:text-ink"
-            }`}
+            className={`pm-pressable min-w-0 flex-1 truncate rounded-[0.6rem] font-semibold transition-colors ${
+              sm ? "px-1 py-1.5" : "px-2.5 py-2"
+            } ${active ? "bg-surface text-ink shadow-card" : "text-muted hover:text-ink"}`}
           >
             {o.label}
           </button>

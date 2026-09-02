@@ -13,16 +13,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-white shadow-card hover:opacity-95",
+  primary: "bg-primary text-white hover:opacity-95",
   secondary: "bg-primary-soft text-primary-ink hover:bg-primary-soft/70",
   ghost: "bg-transparent text-primary hover:bg-primary-soft/60",
   quiet: "bg-surface-2 text-ink hover:bg-surface-2/70",
   danger: "bg-alert-soft text-alert hover:bg-alert-soft/70",
 };
 const SIZE: Record<ButtonSize, string> = {
-  sm: "min-h-[38px] px-3.5 text-sm rounded-xl",
-  md: "min-h-[44px] px-4 text-[15px] rounded-xl",
-  lg: "min-h-[52px] px-5 text-base rounded-2xl",
+  sm: "min-h-[36px] px-3 text-[13px] rounded-lg",
+  md: "min-h-[42px] px-4 text-[14px] rounded-xl",
+  lg: "min-h-[48px] px-5 text-[15px] rounded-xl",
 };
 
 export function Button({
@@ -79,7 +79,7 @@ export function Card({
 }: CardProps) {
   return (
     <Tag
-      className={`${inset ? "pm-inset" : "pm-card"} ${padded ? "p-4" : ""} ${className}`}
+      className={`${inset ? "pm-inset" : "pm-card"} ${padded ? "p-3.5" : ""} ${className}`}
       {...rest}
     >
       {children}
@@ -97,10 +97,8 @@ export function SectionLabel({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-2 mt-1 flex items-center justify-between">
-      <h2 className="pm-label !text-[13px] font-display font-medium normal-case tracking-normal text-muted">
-        {children}
-      </h2>
+    <div className="mb-1.5 flex items-center justify-between px-0.5">
+      <h2 className="text-[13px] font-semibold text-muted">{children}</h2>
       {action}
     </div>
   );
@@ -128,7 +126,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${TONE[tone]} ${className}`}
+      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE[tone]} ${className}`}
     >
       {children}
     </span>
@@ -152,11 +150,11 @@ export function StatValue({
     tone === "primary" ? "text-primary" : tone === "muted" ? "text-muted" : "text-ink";
   return (
     <div>
-      <div className={`font-display text-2xl leading-none ${toneClass}`}>
+      <div className={`font-display text-xl leading-none ${toneClass}`}>
         {value}
-        {unit && <span className="ml-0.5 text-sm text-faint">{unit}</span>}
+        {unit && <span className="ml-0.5 text-[13px] text-faint">{unit}</span>}
       </div>
-      {caption && <div className="mt-1 text-xs text-muted">{caption}</div>}
+      {caption && <div className="mt-1 text-[11px] text-muted">{caption}</div>}
     </div>
   );
 }
@@ -197,17 +195,18 @@ export function Switch({
 }) {
   return (
     <button
+      type="button"
       role="switch"
       aria-checked={checked}
       aria-label={lbl}
       onClick={() => onChange(!checked)}
-      className={`pm-pressable relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+      className={`pm-pressable relative inline-flex h-[26px] w-[44px] shrink-0 items-center rounded-full px-[3px] transition-colors ${
         checked ? "bg-primary" : "bg-line"
       }`}
     >
       <span
-        className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-card transition-transform ${
-          checked ? "translate-x-5" : "translate-x-0.5"
+        className={`h-5 w-5 rounded-full bg-white shadow-[0_1px_2px_rgb(28_25_23/0.25)] transition-transform ${
+          checked ? "translate-x-[18px]" : "translate-x-0"
         }`}
       />
     </button>
@@ -239,16 +238,16 @@ export function ListRow({
   return (
     <Comp
       onClick={onClick}
-      className={`flex w-full items-center gap-3 px-4 py-3.5 text-left ${
+      className={`flex w-full items-center gap-3 px-3.5 py-3 text-left ${
         onClick ? "pm-pressable hover:bg-surface-2/60" : ""
       }`}
     >
-      {icon && <span className="text-muted">{icon}</span>}
+      {icon && <span className="shrink-0 text-muted">{icon}</span>}
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-medium text-ink">{title}</span>
-        {subtitle && <span className="block text-xs text-muted">{subtitle}</span>}
+        <span className="block text-[14px] font-medium text-ink">{title}</span>
+        {subtitle && <span className="mt-0.5 block text-[12px] leading-tight text-muted">{subtitle}</span>}
       </span>
-      {right && <span className="shrink-0 text-muted">{right}</span>}
+      {right && <span className="shrink-0 text-faint">{right}</span>}
     </Comp>
   );
 }

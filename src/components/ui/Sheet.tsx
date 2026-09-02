@@ -53,28 +53,22 @@ export function Sheet({ open, onClose, title, subtitle, children, footer }: Shee
           aria-label={typeof title === "string" ? title : "Dialog"}
           className="animate-sheet-up w-full max-w-app rounded-t-sheet bg-surface shadow-sheet outline-none safe-bottom"
         >
-          <div className="flex items-start justify-between gap-3 px-5 pb-2 pt-3">
-            <div className="mx-auto mt-1 h-1.5 w-10 rounded-full bg-line" aria-hidden="true" />
+          <div className="flex justify-center pt-2.5">
+            <div className="h-1 w-9 rounded-full bg-line" aria-hidden="true" />
           </div>
           {(title || subtitle) && (
-            <div className="flex items-start justify-between gap-3 px-5 pb-1">
-              <div>
-                {title && (
-                  <h2 className="font-display text-xl text-ink">{title}</h2>
-                )}
-                {subtitle && (
-                  <p className="mt-1 text-sm text-muted">{subtitle}</p>
-                )}
+            <div className="flex items-start justify-between gap-3 px-4 pt-2">
+              <div className="min-w-0">
+                {title && <h2 className="font-display text-[18px] text-ink">{title}</h2>}
+                {subtitle && <p className="mt-0.5 text-[13px] text-muted">{subtitle}</p>}
               </div>
-              <IconButton label="Close" onClick={onClose} className="-mr-2 shrink-0">
-                <IconX />
+              <IconButton label="Close" onClick={onClose} className="-mr-1 h-9 w-9 shrink-0">
+                <IconX size={18} />
               </IconButton>
             </div>
           )}
-          <div className="max-h-[68vh] overflow-y-auto px-5 py-3">{children}</div>
-          {footer && (
-            <div className="border-t border-line px-5 py-3">{footer}</div>
-          )}
+          <div className="max-h-[70vh] overflow-y-auto px-4 py-3">{children}</div>
+          {footer && <div className="border-t border-line px-4 py-3">{footer}</div>}
         </div>
       </div>
     </div>
