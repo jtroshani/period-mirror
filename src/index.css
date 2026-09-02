@@ -1,0 +1,142 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap");
+@import "./design-system/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    /* Respects the user's OS text-size preference (accessibility). */
+    font-size: 100%;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: rgb(var(--pm-bg));
+    color: rgb(var(--pm-ink));
+    font-family: theme("fontFamily.sans");
+    font-feature-settings: "cv05", "cv08", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3 {
+    font-family: theme("fontFamily.display");
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--pm-primary));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Elevated content card. Used deliberately, not on every element. */
+  .pm-card {
+    @apply rounded-card bg-surface shadow-card;
+  }
+
+  .pm-inset {
+    @apply rounded-2xl bg-surface-2;
+  }
+
+  /* Touch target minimum 44px; premium tactile press. */
+  .pm-pressable {
+    @apply transition-[transform,background-color,opacity] duration-150 active:scale-[0.98];
+  }
+
+  .pm-label {
+    @apply text-xs font-semibold uppercase tracking-[0.08em] text-faint;
+  }
+
+  /* Range input — themed, large thumb for touch. */
+  .pm-range {
+    @apply h-2 w-full cursor-pointer appearance-none rounded-full bg-surface-2;
+    background-image: linear-gradient(
+      rgb(var(--pm-primary)),
+      rgb(var(--pm-primary))
+    );
+    background-repeat: no-repeat;
+  }
+  .pm-range::-webkit-slider-thumb {
+    @apply h-7 w-7 appearance-none rounded-full border-2 border-surface bg-primary shadow-card;
+  }
+  .pm-range::-moz-range-thumb {
+    @apply h-7 w-7 rounded-full border-2 border-surface bg-primary shadow-card;
+    border: 2px solid rgb(var(--pm-surface));
+  }
+
+  .pm-scrim {
+    @apply fixed inset-0 z-40 bg-ink/40 backdrop-blur-[2px] animate-scrim-in;
+  }
+}
+
+@layer utilities {
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* --- Print: the Health Report renders as a clean A4-style document --- */
+.pm-print-portal {
+  display: none;
+}
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  #root {
+    display: none !important;
+  }
+  .pm-print-portal {
+    display: block !important;
+  }
+  .pm-print-doc {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+  .pm-print-doc * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .pm-page-break {
+    break-before: page;
+  }
+}

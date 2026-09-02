@@ -1,0 +1,62 @@
+/*
+ * Period Mirror — design tokens.
+ * Single source of truth for the colour system. Values are space-separated
+ * RGB channels so Tailwind can apply opacity via `rgb(var(--pm-x) / <alpha>)`.
+ *
+ * Palette intent: warm off-white ground, muted plum as the one brand accent,
+ * terracotta for warmth, sage / amber / brick for normal / notice / alert.
+ * Ordinary data is never shown in alarm red — brick is reserved for the
+ * safety layer only.
+ */
+
+:root {
+  --pm-bg: 251 250 248; /* #fbfaf8 warm paper */
+  --pm-surface: 255 255 255;
+  --pm-surface-2: 245 242 238; /* #f5f2ee */
+  --pm-line: 232 227 221; /* #e8e3dd hairline */
+  --pm-ink: 33 30 28; /* #211e1c near-black warm */
+  --pm-muted: 108 103 98; /* #6c6762 secondary text */
+  --pm-faint: 150 144 138; /* #96908a tertiary text */
+
+  --pm-primary: 124 77 107; /* #7c4d6b muted plum */
+  --pm-primary-soft: 242 233 239; /* #f2e9ef tint */
+  --pm-primary-ink: 79 46 68; /* #4f2e44 text on soft */
+
+  --pm-accent: 201 123 99; /* #c97b63 terracotta */
+
+  --pm-normal: 91 138 114; /* #5b8a72 sage — "within your usual" */
+  --pm-normal-soft: 232 240 234;
+  --pm-notice: 183 122 55; /* #b77a37 amber — "different from usual" */
+  --pm-notice-soft: 246 238 226;
+  --pm-alert: 176 74 66; /* #b04a42 brick — safety layer only */
+  --pm-alert-soft: 246 231 229;
+  --pm-info: 84 106 125; /* #546a7d slate — neutral/informational */
+
+  color-scheme: light;
+}
+
+.dark {
+  --pm-bg: 25 21 18; /* #191512 */
+  --pm-surface: 33 29 26; /* #211d1a */
+  --pm-surface-2: 42 37 33; /* #2a2521 */
+  --pm-line: 58 51 46; /* #3a332e */
+  --pm-ink: 240 236 231; /* #f0ece7 */
+  --pm-muted: 176 168 160; /* #b0a8a0 */
+  --pm-faint: 133 125 117; /* #857d75 */
+
+  --pm-primary: 197 145 178; /* lighter plum for contrast on dark */
+  --pm-primary-soft: 55 40 51;
+  --pm-primary-ink: 233 214 226;
+
+  --pm-accent: 219 149 128;
+
+  --pm-normal: 132 181 156;
+  --pm-normal-soft: 38 51 44;
+  --pm-notice: 214 162 100;
+  --pm-notice-soft: 56 46 32;
+  --pm-alert: 224 138 130;
+  --pm-alert-soft: 58 38 36;
+  --pm-info: 145 168 187;
+
+  color-scheme: dark;
+}

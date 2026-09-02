@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Period Mirror">
+  <rect width="64" height="64" rx="14" fill="#fbfaf8"/>
+  <circle cx="32" cy="32" r="19" fill="none" stroke="#7c4d6b" stroke-width="4"/>
+  <path d="M32 15a17 17 0 0 0 0 34" fill="none" stroke="#c97b63" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="6" fill="#7c4d6b"/>
+</svg>
