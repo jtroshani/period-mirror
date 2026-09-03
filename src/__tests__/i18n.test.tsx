@@ -53,7 +53,8 @@ describe("Italian UI", () => {
 
   it("translates the Today screen", async () => {
     const text = await mount("/today");
-    expect(text).toMatch(/Buongiorno|Buon pomeriggio|Buonasera/);
+    expect(text).toContain("Pronta per una buona giornata?");
+    expect(text).toContain("Registra i tuoi sintomi");
     expect(text).toContain("Come mi sento oggi?");
     expect(text).toContain("Registrazione rapida");
   });

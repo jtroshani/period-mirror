@@ -5,8 +5,6 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Semantic tokens — resolved from CSS variables so dark mode is a
-        // single source of truth in `src/design-system/tokens.css`.
         bg: "rgb(var(--pm-bg) / <alpha-value>)",
         surface: "rgb(var(--pm-surface) / <alpha-value>)",
         "surface-2": "rgb(var(--pm-surface-2) / <alpha-value>)",
@@ -25,6 +23,12 @@ export default {
         alert: "rgb(var(--pm-alert) / <alpha-value>)",
         "alert-soft": "rgb(var(--pm-alert-soft) / <alpha-value>)",
         info: "rgb(var(--pm-info) / <alpha-value>)",
+        phase: {
+          menstrual: "rgb(var(--pm-phase-menstrual) / <alpha-value>)",
+          follicular: "rgb(var(--pm-phase-follicular) / <alpha-value>)",
+          ovulation: "rgb(var(--pm-phase-ovulation) / <alpha-value>)",
+          luteal: "rgb(var(--pm-phase-luteal) / <alpha-value>)",
+        },
       },
       fontFamily: {
         sans: [
@@ -39,22 +43,24 @@ export default {
           "sans-serif",
         ],
         display: [
-          "Fraunces",
-          "Georgia",
-          "Cambria",
-          "Times New Roman",
-          "serif",
+          "Poppins",
+          "InterVariable",
+          "Inter",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "sans-serif",
         ],
       },
       borderRadius: {
-        card: "1rem",
-        sheet: "1.5rem",
+        card: "1.5rem",
+        sheet: "1.75rem",
       },
       boxShadow: {
-        card: "0 1px 2px rgb(28 25 23 / 0.04)",
-        pop: "0 4px 16px -6px rgb(28 25 23 / 0.14)",
-        sheet: "0 -8px 40px -12px rgb(28 25 23 / 0.22)",
-        nav: "0 -1px 0 rgb(28 25 23 / 0.06)",
+        card: "0 12px 40px -18px rgb(74 54 90 / 0.22)",
+        pop: "0 8px 30px -10px rgb(74 54 90 / 0.28)",
+        sheet: "0 -10px 44px -14px rgb(43 32 51 / 0.28)",
+        nav: "0 -1px 0 rgb(43 32 51 / 0.05)",
       },
       maxWidth: {
         app: "30rem",
@@ -68,10 +74,7 @@ export default {
           from: { transform: "translateY(100%)" },
           to: { transform: "translateY(0)" },
         },
-        "scrim-in": {
-          from: { opacity: "0" },
-          to: { opacity: "1" },
-        },
+        "scrim-in": { from: { opacity: "0" }, to: { opacity: "1" } },
       },
       animation: {
         "fade-in": "fade-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both",

@@ -20,9 +20,9 @@ const VARIANT: Record<ButtonVariant, string> = {
   danger: "bg-alert-soft text-alert hover:bg-alert-soft/70",
 };
 const SIZE: Record<ButtonSize, string> = {
-  sm: "min-h-[36px] px-3 text-[13px] rounded-lg",
-  md: "min-h-[42px] px-4 text-[14px] rounded-xl",
-  lg: "min-h-[48px] px-5 text-[15px] rounded-xl",
+  sm: "min-h-[36px] px-3.5 text-[13px] rounded-full",
+  md: "min-h-[44px] px-5 text-[14px] rounded-full",
+  lg: "min-h-[52px] px-6 text-[15px] rounded-full",
 };
 
 export function Button({
@@ -67,21 +67,21 @@ export function IconButton({ label, className = "", children, ...rest }: IconBut
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   as?: "div" | "section" | "article";
   inset?: boolean;
+  tint?: boolean;
   padded?: boolean;
 }
 export function Card({
   as: Tag = "section",
   inset,
+  tint,
   padded = true,
   className = "",
   children,
   ...rest
 }: CardProps) {
+  const base = inset ? "pm-inset" : tint ? "pm-card-tint" : "pm-card";
   return (
-    <Tag
-      className={`${inset ? "pm-inset" : "pm-card"} ${padded ? "p-3.5" : ""} ${className}`}
-      {...rest}
-    >
+    <Tag className={`${base} ${padded ? "p-4" : ""} ${className}`} {...rest}>
       {children}
     </Tag>
   );

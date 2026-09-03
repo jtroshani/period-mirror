@@ -106,6 +106,10 @@ export const en = {
     greetingAfternoon: "Good afternoon",
     greetingEvening: "Good evening",
     greetingNamed: "{greeting}, {name}",
+    hi: "Hi, {name}",
+    readyLine: "Ready for a good day?",
+    logSymptoms: "Log Your Symptoms",
+    feelTodayHeading: "How do you feel today?",
     periodDay: "Day {n}",
     ofYourPeriod: "of your period",
     cycleDay: "Day {n}",
@@ -204,6 +208,8 @@ export const en = {
   calendar: {
     title: "Calendar",
     nextPeriod: "Next period",
+    loggedData: "Logged Data",
+    dayPhase: "Day {n} — {phase} phase",
     plusMinusDays: "±{n}d",
     windowLegend: "Likely start window",
     ageNote:
@@ -648,6 +654,10 @@ export const it: DeepPartial<typeof en> = {
     greetingAfternoon: "Buon pomeriggio",
     greetingEvening: "Buonasera",
     greetingNamed: "{greeting}, {name}",
+    hi: "Ciao, {name}",
+    readyLine: "Pronta per una buona giornata?",
+    logSymptoms: "Registra i tuoi sintomi",
+    feelTodayHeading: "Come ti senti oggi?",
     periodDay: "Giorno {n}",
     ofYourPeriod: "delle mestruazioni",
     cycleDay: "Giorno {n}",
@@ -746,6 +756,8 @@ export const it: DeepPartial<typeof en> = {
   calendar: {
     title: "Calendario",
     nextPeriod: "Prossime mestruazioni",
+    loggedData: "Dati registrati",
+    dayPhase: "Giorno {n} — fase {phase}",
     plusMinusDays: "±{n}gg",
     windowLegend: "Finestra di inizio probabile",
     ageNote:

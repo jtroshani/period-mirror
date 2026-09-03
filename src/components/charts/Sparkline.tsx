@@ -9,10 +9,10 @@ interface SparklineProps {
 }
 
 const TONE = {
-  primary: "rgb(var(--pm-primary))",
+  primary: "rgb(var(--pm-accent))",
   normal: "rgb(var(--pm-normal))",
   notice: "rgb(var(--pm-notice))",
-  info: "rgb(var(--pm-info))",
+  info: "rgb(var(--pm-phase-luteal))",
 };
 
 /** Tiny trend line. Non-essential detail — always paired with a text summary. */

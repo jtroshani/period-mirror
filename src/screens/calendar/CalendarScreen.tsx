@@ -134,9 +134,9 @@ export function CalendarScreen() {
                   <span
                     className={`flex h-[26px] w-[26px] items-center justify-center rounded-full ${
                       isPeriod
-                        ? "bg-primary font-semibold text-white"
+                        ? "bg-phase-menstrual font-semibold text-white"
                         : isPredicted
-                          ? "border border-dashed border-primary text-primary"
+                          ? "border border-dashed border-phase-menstrual text-phase-menstrual"
                           : ""
                     }`}
                   >
@@ -184,10 +184,10 @@ export function CalendarScreen() {
           <p className="mb-2 text-[12px] font-semibold text-muted">{t("calendar.legend")}</p>
           <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] text-muted">
             <li className="flex items-center gap-2">
-              <span className="h-3 w-3 shrink-0 rounded-full bg-primary" /> {t("calendar.legRecorded")}
+              <span className="h-3 w-3 shrink-0 rounded-full bg-phase-menstrual" /> {t("calendar.legRecorded")}
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-3 w-3 shrink-0 rounded-full border border-dashed border-primary" />{" "}
+              <span className="h-3 w-3 shrink-0 rounded-full border border-dashed border-phase-menstrual" />{" "}
               {t("calendar.legPredicted")}
             </li>
             {predictedWindowDays.size > 0 && (

@@ -1,62 +1,68 @@
 /*
  * Period Mirror — design tokens.
- * Single source of truth for the colour system. Values are space-separated
- * RGB channels so Tailwind can apply opacity via `rgb(var(--pm-x) / <alpha>)`.
- *
- * Palette intent: warm off-white ground, muted plum as the one brand accent,
- * terracotta for warmth, sage / amber / brick for normal / notice / alert.
- * Ordinary data is never shown in alarm red — brick is reserved for the
- * safety layer only.
+ * Soft lavender / pink wellness palette. Values are space-separated RGB
+ * channels so Tailwind applies opacity via `rgb(var(--pm-x) / <alpha>)`.
  */
 
 :root {
-  --pm-bg: 251 250 248; /* #fbfaf8 warm paper */
+  --pm-bg: 244 238 241; /* #f4eef1 warm pink-white */
   --pm-surface: 255 255 255;
-  --pm-surface-2: 245 242 238; /* #f5f2ee */
-  --pm-line: 232 227 221; /* #e8e3dd hairline */
-  --pm-ink: 33 30 28; /* #211e1c near-black warm */
-  --pm-muted: 108 103 98; /* #6c6762 secondary text */
-  --pm-faint: 150 144 138; /* #96908a tertiary text */
+  --pm-surface-2: 244 238 245; /* #f4eef5 lilac tint */
+  --pm-line: 234 225 236; /* #eae1ec */
+  --pm-ink: 43 32 51; /* #2b2033 deep plum-black */
+  --pm-muted: 124 112 130; /* #7c7082 */
+  --pm-faint: 168 157 174; /* #a89dae */
 
-  --pm-primary: 124 77 107; /* #7c4d6b muted plum */
-  --pm-primary-soft: 242 233 239; /* #f2e9ef tint */
-  --pm-primary-ink: 79 46 68; /* #4f2e44 text on soft */
+  --pm-primary: 74 54 90; /* #4a365a deep plum — buttons / active */
+  --pm-primary-soft: 240 230 246; /* #f0e6f6 */
+  --pm-primary-ink: 66 46 82; /* #422e52 */
 
-  --pm-accent: 201 123 99; /* #c97b63 terracotta */
+  --pm-accent: 222 88 194; /* #de58c2 magenta-pink */
 
-  --pm-normal: 91 138 114; /* #5b8a72 sage — "within your usual" */
-  --pm-normal-soft: 232 240 234;
-  --pm-notice: 183 122 55; /* #b77a37 amber — "different from usual" */
-  --pm-notice-soft: 246 238 226;
-  --pm-alert: 176 74 66; /* #b04a42 brick — safety layer only */
-  --pm-alert-soft: 246 231 229;
-  --pm-info: 84 106 125; /* #546a7d slate — neutral/informational */
+  --pm-normal: 106 178 150; /* #6ab296 mint — "within your usual" */
+  --pm-normal-soft: 227 241 235;
+  --pm-notice: 214 138 92; /* #d68a5c warm coral — "different from usual" */
+  --pm-notice-soft: 248 237 227;
+  --pm-alert: 190 84 92; /* #be545c rose-brick — safety layer only */
+  --pm-alert-soft: 248 232 234;
+  --pm-info: 138 122 168; /* #8a7aa8 lilac-slate */
+
+  /* Cycle-phase accents */
+  --pm-phase-menstrual: 222 88 194; /* magenta */
+  --pm-phase-follicular: 240 164 143; /* coral */
+  --pm-phase-ovulation: 245 190 218; /* soft pink */
+  --pm-phase-luteal: 201 163 232; /* lilac */
 
   color-scheme: light;
 }
 
 .dark {
-  --pm-bg: 25 21 18; /* #191512 */
-  --pm-surface: 33 29 26; /* #211d1a */
-  --pm-surface-2: 42 37 33; /* #2a2521 */
-  --pm-line: 58 51 46; /* #3a332e */
-  --pm-ink: 240 236 231; /* #f0ece7 */
-  --pm-muted: 176 168 160; /* #b0a8a0 */
-  --pm-faint: 133 125 117; /* #857d75 */
+  --pm-bg: 26 20 31; /* #1a141f */
+  --pm-surface: 37 29 44; /* #251d2c */
+  --pm-surface-2: 47 37 55; /* #2f2537 */
+  --pm-line: 61 49 71; /* #3d3147 */
+  --pm-ink: 240 234 244; /* #f0eaf4 */
+  --pm-muted: 180 168 188; /* #b4a8bc */
+  --pm-faint: 134 122 144; /* #867a90 */
 
-  --pm-primary: 197 145 178; /* lighter plum for contrast on dark */
-  --pm-primary-soft: 55 40 51;
-  --pm-primary-ink: 233 214 226;
+  --pm-primary: 208 170 232; /* lighter lilac on dark */
+  --pm-primary-soft: 55 42 66;
+  --pm-primary-ink: 233 217 243;
 
-  --pm-accent: 219 149 128;
+  --pm-accent: 236 130 210;
 
-  --pm-normal: 132 181 156;
-  --pm-normal-soft: 38 51 44;
-  --pm-notice: 214 162 100;
-  --pm-notice-soft: 56 46 32;
-  --pm-alert: 224 138 130;
-  --pm-alert-soft: 58 38 36;
-  --pm-info: 145 168 187;
+  --pm-normal: 130 190 165;
+  --pm-normal-soft: 38 52 46;
+  --pm-notice: 224 160 116;
+  --pm-notice-soft: 56 44 34;
+  --pm-alert: 224 138 146;
+  --pm-alert-soft: 58 38 42;
+  --pm-info: 168 154 196;
+
+  --pm-phase-menstrual: 232 118 208;
+  --pm-phase-follicular: 240 168 148;
+  --pm-phase-ovulation: 244 186 214;
+  --pm-phase-luteal: 206 172 236;
 
   color-scheme: dark;
 }
